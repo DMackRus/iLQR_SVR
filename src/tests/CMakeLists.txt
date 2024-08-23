@@ -2,7 +2,6 @@
 add_executable(test_derivs ../../src/tests/Derivs_Test.cpp
         ../../src/Differentiator/Differentiator.cpp
         ../../src/ModelTranslator/ModelTranslator.cpp
-        ../../src/ModelTranslator/Acrobot.cpp
         ../../src/tests/3D_test_class.h
         ../../src/PhysicsSimulators/MuJoCoHelper.cpp
         ../../src/StdInclude/StdInclude.cpp
@@ -17,7 +16,6 @@ add_test(Derivs test_derivs)
 add_executable(test_keypoints ../../src/tests/Keypoints_Test.cpp
         ../../src/Differentiator/Differentiator.cpp
         ../../src/ModelTranslator/ModelTranslator.cpp
-        ../../src/ModelTranslator/Acrobot.cpp
         ../../src/tests/3D_test_class.h
         ../../src/PhysicsSimulators/MuJoCoHelper.cpp
         ../../src/StdInclude/StdInclude.cpp

@@ -62,12 +62,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
             src/Visualiser/Visualiser.cpp
         src/ModelTranslator/TwoDPushing.cpp
             src/Differentiator/Differentiator.cpp
-            src/Optimiser/Optimiser.cpp
-            src/Optimiser/iLQR.cpp
-#            src/Optimiser/PredictiveSampling.cpp
+        #            src/Optimiser/PredictiveSampling.cpp
         src/FileHandler/FileHandler.cpp
 #            src/Optimiser/GradDescent.cpp
-        src/ModelTranslator/Acrobot.cpp
         src/GenTestingData.cpp
             src/KeyPointGenerator/KeyPointGenerator.cpp
         src/ModelTranslator/PushBaseClass.cpp
