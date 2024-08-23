@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# CMake folder
+/cmake-build-debug
+/cmake-build-release
+/mujoco_models
+
