@@ -64,7 +64,7 @@ public:
      * to optimise the trajectory. Step 1 - Compute derivatives, Step 2 - backwards pass, Step 3 - forwards pass with linesearch.
      * Step 4 - check for convergence.
      *
-     * @param initial_data_index - The data index of the simulation data which should be the starting state of optimisation.
+     * @param d - The MuJoCo data of the simulation which should be the starting state for optimisation.
      * @param initial_controls - The initial "warm start" trajectory to optimise from.
      * @param max_iterations - Maximum number of optimisation iterations.
      * @param min_iterations - Minimum number of optimisation iterations.
@@ -74,28 +74,51 @@ public:
      */
     std::vector<MatrixXd> Optimise(mjData *d, std::vector<MatrixXd> initial_controls, int max_iterations, int min_iterations, int horizon_length);
 
+    /**
+     * Perform one iteraiton of iLQR optimisation.
+     *
+     * @param iteration_num - Iteration number
+     * @param converged - Whether the optimisation has converged or not.
+     * @param lambda_exit - Whether the optimisation has exited due to lambda being too high.
+     *
+     */
     void Iteration(int iteration_num, bool &converged, bool &lambda_exit);
 
+    /**
+     * Print Optimisation banner to the console.
+     *
+     * @param time_rollout - The MuJoCo data of the simulation which should be the starting state for optimisation.
+     *
+     */
     static void PrintBanner(double time_rollout);
 
+    /**
+     * Print the iteration banner to the console.
+     *
+     * @param iteration - The current iteration number.
+     * @param _new_cost - The cost of the new trajectory.
+     * @param _old_cost - The cost of the old trajectory.
+     * @param eps - The convergence threshold.
+     * @param _lambda - The current lambda value.
+     * @param num_dofs - The number of DoFs in the state vector.
+     * @param time_derivs - The time taken to compute the derivatives.
+     * @param time_bp - The time taken to perform the backwards pass.
+     * @param time_fp - The time taken to perform the forwards pass.
+     * @param best_alpha - The best alpha value found during the forwards pass.
+     *
+     */
     void PrintBannerIteration(int iteration, double _new_cost, double _old_cost, double eps,
                               double _lambda, int num_dofs, double time_derivs, double time_bp,
                               double time_fp, double best_alpha);
 
-    void Resize(int new_num_dofs, int new_num_ctrl, int new_horizon);
-
-    std::string ReturnName(){
-        return "iLQR_SVR";
-    }
-
     /**
-     * Compute the new optimal control feedback law K and k from the end of the trajectory to the beginning.
+     * Resize the state vector and control vector to new sizes.
      *
-     * @return bool - true if successful (all matrices were P.D), false otherwise.
+     * @param new_num_dofs - New number of dofs in the state vector.
+     * @param new_num_ctrl - New number of controls in the control vector.
+     * @param new_horizon - New optimisation horizon of the trajectory.
      */
-    bool BackwardsPassQuuRegularisation();
-
-
+    void Resize(int new_num_dofs, int new_num_ctrl, int new_horizon);
 
     // ------------------------------------------------------------------------------------
     //                                 Variables
@@ -215,78 +238,63 @@ private:
     void WorkerComputeResidualDerivatives(int threadId);
 
     /**
-     * This functions generates all the dynamic derivatives and cost derivatives over the entire trajectory.
+     * This functions generates all the dynamics and cost derivatives over the trajectory.
      *
      */
     void GenerateDerivatives();
 
+    /**
+     * This function generates the dynamics derivatives over the trajectory.
+     *
+     */
     void ComputeDynamicsDerivatives();
+
+    /**
+     * This function generates the cost derivatives over the trajectory.
+     *
+     */
     void ComputeCostDerivatives();
 
+    /**
+     * Update the nominal trajectory information.
+     *
+     */
     void UpdateNominal();
 
+    /**
+     * Resample unused Dofs to be re-introduced to the state vector.
+     *
+     */
     void ResampleNewDofs();
+
+    /**
+     * Remove the least important DoFs from the state vector.
+     *
+     */
     void RemoveDofs();
 
-    void AdjustCurrentStateVector();
+    /**
+     * Compute the new optimal control feedback law K and k from the end of the trajectory to the beginning.
+     *
+     * @return bool - true if successful (all matrices were P.D), false otherwise.
+     */
+    bool BackwardsPassQuuRegularisation();
 
-    // List of differentiator function callbacks, for parallelisation.
-    std::vector<void (Differentiator::*)(MatrixXd &A, MatrixXd &B, const std::vector<int> &cols,
-                                         int dataIndex, int threadId,
-                                         bool central_diff, double eps)> tasks_dynamics_derivs;
+    // ------------------------------------------------------------------------------------
+    //                                 Variables
+    // ------------------------------------------------------------------------------------
 
-    std::vector<void (Differentiator::*)(vector<MatrixXd> &r_x, vector<MatrixXd> &r_u,
-                                         int dataIndex, int tid, bool central_diff, double eps)> tasks_residual_derivs;
-
-    // Last number of linesearches performed for print banner
-    int last_iter_num_linesearches = 0;
-    double last_alpha = 0.0f;
-
-    // Feedback gains matrices
-    // open loop feedback gains
-    vector<MatrixXd> k;
-    // State dependant feedback matrices
-    vector<MatrixXd> K;
-
-    double delta_J = 0.0f;
-
-    double expected = 0.0f;
-    double surprise = 0.0f;
-    std::vector<double> surprises;
-    std::vector<double> expecteds;
-
-
-
-    double epsConverge = 0.02;
-
+    // Shared pointers to other classes
     // Visualiser object
     std::shared_ptr<Visualiser> active_visualiser;
 
+    // Active model translator (what task we are solving)
     std::shared_ptr<ModelTranslator> activeModelTranslator;
+    // Physics simulator helper
     std::shared_ptr<MuJoCoHelper> MuJoCo_helper;
-
-    std::vector<std::vector<int>> keypointsGlobal;
 
     std::shared_ptr<FileHandler> activeYamlReader;
     std::shared_ptr<Differentiator> activeDifferentiator;
-
-    std::vector<std::vector<mujoco_data_min>> rollout_data;
-    int num_parallel_rollouts = 6;
-
-    // current_iteration used for parallelisation of dynamics derivatives
-    std::atomic<int> current_iteration;
-    int num_threads_iterations;
-    std::vector<int> timeIndicesGlobal;
-
-    double initial_cost = 0.0;
-    double cost_reduction = 0.0;
-
-    int num_iterations;
-
-    std::vector<int> num_dofs;
-    double avg_dofs = 0.0;
-
-    // - Top level function - ensures all derivatives are calculated over an entire trajectory by some method
 
     // -------------- Vectors of matrices for gradient information about the trajectory -------------
     // First order dynamics
@@ -303,29 +311,76 @@ private:
     vector<vector<MatrixXd>> r_x;
     vector<vector<MatrixXd>> r_u;
 
-    int horizon_length = 0;
+    // State rollout data from parallel rollouts
+    std::vector<std::vector<mujoco_data_min>> rollout_data;
+    int num_parallel_rollouts = 6;
 
-    double new_cost = 0.0;
-    double old_cost = 0.0;
+    // Feedback gains matrices
+    // open loop feedback gains
+    vector<MatrixXd> k;
+    // State dependant feedback matrices
+    vector<MatrixXd> K;
 
-    int sampling_k_interval = 1;
-    int num_dofs_readd = 10;
-    double K_matrix_threshold = 1; // maybe 0.001 or 0.0001
-    // When eigen vector 0.1, 0.2, 0.5
-    // WHen just summing numbers went from 1 -> 2000
-    bool eigen_vector_method = false;
-//    double threshold_k_eigenvectors = 0.1;
-
-//    keypoint_method activeKeyPointMethod;
-
-    int dof = 0;
-    int num_ctrl = 0;
-    int dof_used_last_optimisation = 0;
+    // Expected cost reduction
+    double delta_J = 0.0;
+    double expected = 0.0;
+    double surprise = 0.0;
+    std::vector<double> surprises;
+    std::vector<double> expecteds;
 
     // Lambda value which is added to the diagonal of the Q_uu matrix for regularisation purposes.
     double lambda = 0.1;
     double max_lambda = 10.0;
     double min_lambda = 0.0001;
     double lambda_factor = 10;
+
+    // State size information
+    int horizon_length = 0;
+    int dof = 0;
+    int num_ctrl = 0;
+    int dof_used_last_optimisation = 0;
+
+    // Vector of function calls for computing dynamics and residual derivatives
+    std::vector<void (Differentiator::*)(MatrixXd &A, MatrixXd &B, const std::vector<int> &cols,
+                                         int dataIndex, int threadId,
+                                         bool central_diff, double eps)> tasks_dynamics_derivs;
+
+    std::vector<void (Differentiator::*)(vector<MatrixXd> &r_x, vector<MatrixXd> &r_u,
+                                         int dataIndex, int tid, bool central_diff, double eps)> tasks_residual_derivs;
+
+    // Values used in parallelisation of derivatives
+    std::atomic<int> current_iteration;
+    int num_threads_iterations;
+    std::vector<int> timeIndicesGlobal;
+
+    // Parametrisation of iLQR_SVR
+    bool eigen_vector_method = true;
+    int sampling_k_interval = 1;
+    int num_dofs_readd = 10;
+    double K_matrix_threshold = 1; // maybe 0.001 or 0.0001
+    // When eigen vector 0.1, 0.2, 0.5
+    // WHen just summing numbers went from 1 -> 2000
+//    double threshold_k_eigenvectors = 0.1;
+
+    // Cost information
+    double new_cost = 0.0;
+    double old_cost = 0.0;
+    double initial_cost = 0.0;
+    double cost_reduction = 0.0;
+
+    // Last number of linesearches performed for print banner
+    int last_iter_num_linesearches = 0;
+    double last_alpha = 0.0;
+
+    // Convergence criteria
+    double epsConverge = 0.02;
+    // Number of optimisation iterations done
+    int num_iterations;
+
+    std::vector<int> num_dofs;
+    double avg_dofs = 0.0;
+    
+    std::vector<std::vector<int>> keypointsGlobal;
+
 };
 
