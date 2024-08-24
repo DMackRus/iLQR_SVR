@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
 
     yamlReader = std::make_shared<FileHandler>();
     yamlReader->ReadSettingsFile("/GeneralConfigs/" + config_file_name + ".yaml");
-    optimiser = yamlReader->optimiser;
     runMode = yamlReader->project_run_mode;
     task = yamlReader->taskName;
     taskInitMode = yamlReader->taskInitMode;
@@ -466,8 +465,9 @@ void AsyncMPC(){
         // time taken
         auto time_taken = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 
-        // compare how long we took versus the timestep of the model
-        int difference_ms = (activeModelTranslator->MuJoCo_helper->ReturnModelTimeStep() * 1000) - (time_taken / 1000.0f) + 1;
+        // compare how long we took versus the timestep of the model, also accoutning for desired lowdown factor
+        int difference_ms = (activeModelTranslator->MuJoCo_helper->ReturnModelTimeStep() * 1000 * activeModelTranslator->slowdown_factor)
+                                - (time_taken / 1000.0f) + 1;
 
         if(difference_ms > 0) {
 //            difference_ms += 20;
@@ -657,15 +657,15 @@ void MPCUntilComplete(int OPT_HORIZON){
 
 int assign_task(){
     if(task == "pushing_moderate_clutter"){
-        std::shared_ptr<TwoDPushing> myTwoDPushing = std::make_shared<TwoDPushing>(heavyClutter);
+        std::shared_ptr<TwoDPushing> myTwoDPushing = std::make_shared<TwoDPushing>(yamlReader,heavyClutter);
         activeModelTranslator = myTwoDPushing;
     }
     else if(task == "push_soft_into_rigid"){
-        std::shared_ptr<PushSoft> my_squish_soft = std::make_shared<PushSoft>(PUSH_SOFT_RIGID);
+        std::shared_ptr<PushSoft> my_squish_soft = std::make_shared<PushSoft>(yamlReader, PUSH_SOFT_RIGID);
         activeModelTranslator = my_squish_soft;
     }
     else if(task == "push_soft"){
-        std::shared_ptr<PushSoft> my_squish_soft = std::make_shared<PushSoft>(PUSH_SOFT);
+        std::shared_ptr<PushSoft> my_squish_soft = std::make_shared<PushSoft>(yamlReader, PUSH_SOFT);
         activeModelTranslator = my_squish_soft;
     }
     else{

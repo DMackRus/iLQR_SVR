@@ -5,8 +5,6 @@ FileHandler::FileHandler(){
     project_run_mode = "Init_controls";
     // Pendulum
     taskName = "double_pendulum";
-    // interpolated iLQR
-    optimiser = "interpolated_iLQR";
 
     minIter = 2;
     maxIter = 5;
@@ -49,35 +47,36 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         _taskConfig.mpc_horizon = 100;
     }
 
-    _taskConfig.keypointMethod = node["keypointMethod"].as<std::string>();
-    if(node["auto_adjust"]){
-        _taskConfig.auto_adjust = node["auto_adjust"].as<bool>();
+    // Slowdown factor for MPC thread
+    if(node["MPC_slowdown_factor"]){
+        _taskConfig.slowdown_factor = node["MPC_slowdown_factor"].as<int>();
     }
     else{
-        _taskConfig.auto_adjust = false;
+        _taskConfig.slowdown_factor = 1;
     }
 
-    // Min N
-    if(node["minN"]){
-        _taskConfig.minN = node["minN"].as<int>();
+    // K Matrix thresholds
+    if(node["K_matrix_thresholds"]){
+        K_matrix_thresholds = node["K_matrix_thresholds"].as<double>();
     }
     else{
-        _taskConfig.minN = 1;
+        K_matrix_thresholds = 0.1;
     }
 
-    // Max error
-    if(node["maxN"]){
-        _taskConfig.maxN = node["maxN"].as<int>();
+    // Theta (Number of DoFs to re-add each iteration
+    if(node["theta"]){
+        theta = node["theta"].as<int>();
     }
     else{
-        _taskConfig.maxN = 10;
+        theta = 1;
     }
 
-    if(node["iterativeErrorThreshold"]){
-        _taskConfig.iterativeErrorThreshold = node["iterativeErrorThreshold"].as<double>();
+    // SVD method
+    if(node["svd"]){
+        svd_method = node["svd"].as<bool>();
     }
     else{
-        _taskConfig.iterativeErrorThreshold = 10;
+        svd_method = false;
     }
 
     // Loop through robots
@@ -87,11 +86,8 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         string root_name;
         vector<string> jointNames;
         vector<string> actuatorNames;
-
         vector<double> startPos;
 
-        vector<double> jointJerkThresholds;
-        vector<double> magVelThresholds;
 
         robotName = robot_it->first.as<string>();
 
@@ -114,14 +110,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
             startPos.push_back(robot_it->second["startPos"][i].as<double>());
         }
 
-        for(int i = 0; i < robot_it->second["jointJerkThresholds"].size(); i++){
-            jointJerkThresholds.push_back(robot_it->second["jointJerkThresholds"][i].as<double>());
-        }
-
-        for(int i = 0; i < robot_it->second["magVelThresholds"].size(); i++){
-            magVelThresholds.push_back(robot_it->second["magVelThresholds"][i].as<double>());
-        }
-
         tempRobot.name = robotName;
         tempRobot.root_name = root_name;
 
@@ -129,9 +117,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         tempRobot.actuator_names = actuatorNames;
 
         tempRobot.start_pos = startPos;
-
-        tempRobot.jerk_thresholds = jointJerkThresholds;
-        tempRobot.vel_change_thresholds = magVelThresholds;
 
         _taskConfig.robots.push_back(tempRobot);
     }
@@ -144,10 +129,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         bool activeAngularDOF[3];
         double startLinearPos[3];
         double startAngularPos[3];
-        double linearJerkThreshold[3];
-        double angularJerkThreshold[3];
-        double linearMagVelThreshold[3];
-        double angularMagVelThreshold[3];
 
         bodyName = body_it->first.as<string>();
 
@@ -167,32 +148,12 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
             startAngularPos[i] = body_it->second["startAngularPos"][i].as<double>();
         }
 
-        for(int i = 0; i < body_it->second["linearJerkThreshold"].size(); i++){
-            linearJerkThreshold[i] = body_it->second["linearJerkThreshold"][i].as<double>();
-        }
-
-        for(int i = 0; i < body_it->second["angularJerkThreshold"].size(); i++){
-            angularJerkThreshold[i] = body_it->second["angularJerkThreshold"][i].as<double>();
-        }
-
-        for(int i = 0; i < body_it->second["linearMagVelThreshold"].size(); i++){
-            linearMagVelThreshold[i] = body_it->second["linearMagVelThreshold"][i].as<double>();
-        }
-
-        for(int i = 0; i < body_it->second["angularMagVelThreshold"].size(); i++){
-            angularMagVelThreshold[i] = body_it->second["angularMagVelThreshold"][i].as<double>();
-        }
-
         _rigid_body.name = bodyName;
         for(int i = 0; i < 3; i++){
             _rigid_body.active_linear_dof[i] = activeLinearDOF[i];
             _rigid_body.active_angular_dof[i] = activeAngularDOF[i];
             _rigid_body.start_linear_pos[i] = startLinearPos[i];
             _rigid_body.start_angular_pos[i] = startAngularPos[i];
-            _rigid_body.linear_jerk_threshold[i] = linearJerkThreshold[i];
-            _rigid_body.angular_jerk_threshold[i] = angularJerkThreshold[i];
-            _rigid_body.linear_vel_change_threshold[i] = linearMagVelThreshold[i];
-            _rigid_body.angular_vel_change_threshold[i] = angularMagVelThreshold[i];
         }
         _taskConfig.rigid_bodies.push_back(_rigid_body);
     }
@@ -205,8 +166,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         std::vector<vertex> vertices;
         double startLinearPos[3];
         double startAngularPos[3];
-        double goalLinearPos[3];
-        double goalAngularPos[3];
 
         bodyName = body_it->first.as<string>();
         num_vertices = body_it->second["num_vertices"].as<int>();
@@ -215,9 +174,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
             vertex _vertex{};
             for(int j = 0; j < 3; j++){
                 _vertex.active_linear_dof[j] = body_it->second["activeLinearDOF"][j].as<bool>();
-
-                _vertex.linear_jerk_threshold[j] = body_it->second["linearMagVelThreshold"][j].as<double>();
-                _vertex.linear_vel_change_threshold[j] = body_it->second["angularMagVelThreshold"][j].as<double>();
             }
 
             vertices.push_back(_vertex);
@@ -229,14 +185,6 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
 
         for(int i = 0; i < body_it->second["startAngularPos"].size(); i++){
             startAngularPos[i] = body_it->second["startAngularPos"][i].as<double>();
-        }
-
-        for(int i = 0; i < body_it->second["goalLinearPos"].size(); i++){
-            goalLinearPos[i] = body_it->second["goalLinearPos"][i].as<double>();
-        }
-
-        for(int i = 0; i < body_it->second["goalAngularPos"].size(); i++){
-            goalAngularPos[i] = body_it->second["goalAngularPos"][i].as<double>();
         }
 
         _soft_body.name = bodyName;
@@ -288,7 +236,6 @@ void FileHandler::ReadSettingsFile(const std::string& settingsFilePath){
     taskName = node["task"].as<std::string>();
     taskInitMode = node["taskInitMode"].as<std::string>();
     csvRow = node["csvRow"].as<int>();
-
 
     minIter = node["minIter"].as<int>();
     maxIter = node["maxIter"].as<int>();

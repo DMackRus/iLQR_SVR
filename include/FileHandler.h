@@ -25,7 +25,6 @@ public:
 
     std::string project_run_mode;
     std::string taskName;
-    std::string optimiser;
     std::string taskInitMode;
     int csvRow = 0;
     bool async_mpc = true;
@@ -34,6 +33,13 @@ public:
 
     int minIter;
     int maxIter;
+
+    int slow_down_factor;
+
+    // --- iLQR_SVR Settings ---
+    double K_matrix_thresholds;
+    int theta;
+    bool svd_method;
 
 private:
     std::string projectParentPath;

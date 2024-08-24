@@ -5,7 +5,7 @@
 
 class TwoDPushing: virtual public ModelTranslator, public PushBaseClass{
 public:
-    TwoDPushing(int clutterLevel);
+    TwoDPushing(std::shared_ptr<FileHandler> yamlReader, int clutterLevel);
 
     void ReturnRandomStartState() override;
     void ReturnRandomGoalState() override;

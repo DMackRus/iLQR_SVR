@@ -3,11 +3,13 @@ modelName: "/push_mcl"
 timeStep: 0.004
 openloop_horizon: 2000
 mpc_horizon: 50
-keypointMethod: "adaptive_jerk"   # Possible values: "set_interval", "adaptive_jerk", "adaptive_accel", "iterative_error, "velocity_change"
-auto_adjust: false
-minN: 1
-maxN: 50
-iterativeErrorThreshold: 0.0001
+MPC_slowdown_factor: 1
+
+svd: false
+K_matrix_threshold: 1
+theta: 5
+
+
 robots:
   panda:
     jointNames: ["panda0_joint1", "panda0_joint2", "panda0_joint3", "panda0_joint4", "panda0_joint5", "panda0_joint6", "panda0_joint7"]
@@ -23,75 +25,41 @@ bodies:
     activeAngularDOF: [true, true, true]
     startLinearPos: [0.4, 0.2, 0.0]
     startAngularPos: [0, 0, 0]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.01, 0.01, 0.01 ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_1:
     activeLinearDOF: [true, true, true]
     activeAngularDOF: [true, true, true]
     startLinearPos: [0.65, 0.45, 0.0]
     startAngularPos: [0, 0, 0]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02  ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_2:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.68, 0.3, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02  ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_3:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.72, 0.3, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02  ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_4:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.5, 0.2, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02  ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_5:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.55, 0.45, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02  ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_6:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.6, 0.15, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02 ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
   obstacle_7:
     activeLinearDOF: [ true, true, true ]
     activeAngularDOF: [ true, true, true ]
     startLinearPos: [ 0.75, 0.5, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-    goalLinearPos: [ 0.5, 0.5, 0.0 ]
-    goalAngularPos: [ 0, 0, 0 ]
-    linearJerkThreshold: [ 1, 1, 1 ]
-    angularJerkThreshold: [ 0.02, 0.02, 0.02 ]
-    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
 
 residuals:
   goal_pos:

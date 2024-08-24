@@ -1,6 +1,9 @@
 #include "ModelTranslator/PushSoft.h"
 
-PushSoft::PushSoft(int _task_mode): PushBaseClass("franka_gripper", "goal"){
+PushSoft::PushSoft(std::shared_ptr<FileHandler> yamlReader, int _task_mode) : ModelTranslator(yamlReader),
+                                                                              PushBaseClass(
+                                                                                      std::shared_ptr<FileHandler>(),
+                                                                                      "franka_gripper", "goal") {
     task_mode = _task_mode;
 
     std::string yamlFilePath;

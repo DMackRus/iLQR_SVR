@@ -10,7 +10,7 @@ enum task_mode{
 
 class PushSoft: virtual public ModelTranslator, public PushBaseClass{
 public:
-    PushSoft(int _task_mode);
+    PushSoft(std::shared_ptr<FileHandler> yamlReader, int _task_mode);
 //
 //    void ReturnRandomStartState() override;
 //    void ReturnRandomGoalState() override;

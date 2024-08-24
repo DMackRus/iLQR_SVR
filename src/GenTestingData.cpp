@@ -869,7 +869,7 @@
 //        out << YAML::Value << optimiser->K_matrix_threshold;
 //
 //        out << YAML::Key << "Eigen vector method";
-//        out << YAML::Value << optimiser->eigen_vector_method;
+//        out << YAML::Value << optimiser->svd_method;
 //    }
 //    out << YAML::EndMap;
 //

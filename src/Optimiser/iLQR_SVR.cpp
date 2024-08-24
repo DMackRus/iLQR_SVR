@@ -31,166 +31,19 @@ iLQR_SVR::iLQR_SVR(std::shared_ptr<ModelTranslator> _modelTranslator, std::share
         }
     }
 
+    // Setup iLQR_SVR method from YAML file settings
+    K_matrix_threshold = activeYamlReader->K_matrix_thresholds;
+    num_dofs_readd = activeYamlReader->theta;
+    svd_method = activeYamlReader->svd_method;
+
+    std::cout << "K threshold: " << K_matrix_threshold << " theta: " << num_dofs_readd << " svd method: " << svd_method << std::endl;
+
     rollout_data.resize(num_parallel_rollouts);
 
     Resize(activeModelTranslator->current_state_vector.dof,
            activeModelTranslator->current_state_vector.num_ctrl, horizon);
 
 }
-
-//void iLQR_SVR::Resize(int new_num_dofs, int new_num_ctrl, int new_horizon){
-//    auto start = std::chrono::high_resolution_clock::now();
-//    std::cout << "new dofs: " << new_num_dofs << " new ctrl: " << new_num_ctrl << " new horizon: " << new_horizon << std::endl;
-//
-//    bool update_ctrl = false;
-//    bool update_dof = false;
-//    bool update_horizon = false;
-//    if(new_num_ctrl != this->num_ctrl){
-//        this->num_ctrl = new_num_ctrl;
-//        update_ctrl = true;
-//    }
-//
-//    if(new_num_dofs != this->dof){
-//        this->dof = new_num_dofs;
-//        update_dof = true;
-//    }
-//
-//    if(new_horizon != this->horizon_length){
-//        this->horizon_length = new_horizon;
-//        update_horizon = true;
-//    }
-//
-//    // Clear old matrices
-//    if(update_ctrl){
-//        // Cost derivatives with respect to control
-//        l_u.clear();
-//        l_uu.clear();
-//
-//        // Residual derivatives with respect to control
-//        r_u.clear();
-//
-//        // Old control trajectory
-//        U_old.clear();
-//
-//        // Open-loop feedback control law
-//        k.clear();
-//    }
-//
-//    if(update_dof){
-//        // Cost derivatives with respect to state
-//        l_x.clear();
-//        l_xx.clear();
-//
-//        // Residual derivatives with respect to state
-//        r_x.clear();
-//
-//        // Dynamics derivatives with respect to state
-//        A.clear();
-//
-//        // New and old state trajectories
-//        X_old.clear();
-//        X_new.clear();
-//    }
-//
-//    if(update_horizon){
-//        residuals.clear();
-//    }
-//
-//    // dependant on both dofs and num_ctrl
-//    B.clear();
-//    K.clear();
-//
-//    int num_dof = activeModelTranslator->current_state_vector.dof;
-//    int num_dof_quat = activeModelTranslator->current_state_vector.dof_quat;
-//
-//    for(int t = 0; t < this->horizon_length; t++){
-//        // Cost matrices
-//
-//        if(update_dof){
-//            l_x.emplace_back(MatrixXd(2*dof, 1));
-//            l_xx.emplace_back(MatrixXd(2*dof, 2*dof));
-//
-//            A.emplace_back(MatrixXd(2*dof, 2*dof));
-//
-//            X_old.emplace_back(MatrixXd(num_dof_quat + num_dof, 1));
-//            X_new.emplace_back(MatrixXd(num_dof_quat + num_dof, 1));
-//
-//
-//            vector<MatrixXd> r_x_;
-//            for(int i = 0; i < activeModelTranslator->residual_list.size(); i++) {
-//                r_x_.emplace_back(MatrixXd(2*dof, 1));
-//            }
-//
-//            r_x.emplace_back(r_x_);
-//        }
-//
-//        if(update_ctrl){
-//            l_u.emplace_back(MatrixXd(num_ctrl, 1));
-//            l_uu.emplace_back(MatrixXd(num_ctrl, num_ctrl));
-//
-//            k.emplace_back(MatrixXd(num_ctrl, 1));
-//
-//            U_old.emplace_back(MatrixXd(num_ctrl, 1));
-//
-//            vector<MatrixXd> r_u_;
-//            for(int i = 0; i < activeModelTranslator->residual_list.size(); i++) {
-//                r_u_.emplace_back(MatrixXd(num_ctrl, 1));
-//            }
-//
-//            r_u.emplace_back(r_u_);
-//        }
-//
-//        B.emplace_back(MatrixXd(2*dof, num_ctrl));
-//        K.emplace_back(MatrixXd(num_ctrl, 2*dof));
-//    }
-//
-//    // One more state than control
-//    if(update_dof){
-//        l_x.push_back(MatrixXd(2*dof, 1));
-//        l_xx.push_back(MatrixXd(2*dof, 2*dof));
-//
-//        X_old.push_back(MatrixXd(num_dof_quat + num_dof, 1));
-//        X_new.push_back(MatrixXd(num_dof_quat + num_dof, 1));
-//    }
-//
-//    // TODO - validate this method of saving trajectory data works correctly
-//    if(update_horizon){
-//        // Clear old rollout datas
-//        for(int i = 0; i < num_parallel_rollouts; i++){
-//            rollout_data[i].clear();
-//        }
-//
-//        std::vector<mujoco_data_min> data_horizon(horizon_length);
-//
-//        mujoco_data_min data_timestep;
-//        data_timestep.time = 0.0;
-//        data_timestep.q_pos.resize(MuJoCo_helper->model->nq);
-//        data_timestep.q_vel.resize(MuJoCo_helper->model->nv);
-//        data_timestep.q_acc.resize(MuJoCo_helper->model->nv);
-//        data_timestep.q_acc_warmstart.resize(MuJoCo_helper->model->nv);
-//        data_timestep.qfrc_applied.resize(MuJoCo_helper->model->nv);
-//        data_timestep.xfrc_applied.resize(6*MuJoCo_helper->model->nbody);
-//        data_timestep.ctrl.resize(MuJoCo_helper->model->nu);
-//
-//        for(int t = 0; t < horizon_length; t++){
-//            data_horizon[t] = data_timestep;
-//        }
-//
-//        for(int i = 0; i < num_parallel_rollouts; i++){
-//            rollout_data[i].resize(horizon_length);
-//            rollout_data[i] = data_horizon;
-//        }
-//
-//        for(int t = 0; t < horizon_length; t++){
-//            residuals.push_back(MatrixXd(activeModelTranslator->residual_list.size(), 1));
-//        }
-//
-//    }
-//
-//    std::cout << "time to allocate, " << duration_cast<microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000.0 << " ms \n";
-//
-//    std::cout << "length of A: " << A.size() << ", size of A is: " << A[0].cols() << "\n";
-//}
 
 void iLQR_SVR::Resize(int new_num_dofs, int new_num_ctrl, int new_horizon){
     auto start = std::chrono::high_resolution_clock::now();
@@ -555,7 +408,6 @@ void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
 
     // Resample new dofs - subject to criteria
     // Adjust state vector - remove candidates for removal
-//    AdjustCurrentStateVector();
     ResampleNewDofs();
     num_dofs.push_back(activeModelTranslator->current_state_vector.dof);
     dof_used_last_optimisation = activeModelTranslator->current_state_vector.dof;
@@ -1046,7 +898,7 @@ std::vector<std::string> iLQR_SVR::LeastImportantDofs(){
     std::vector<double> K_dofs_sums(dof, 0.0);
 
     // ---------------------------- Eigen vector method ---------------------------------------------
-    if(eigen_vector_method){
+    if(svd_method){
         for(int t = 0; t < horizon_length; t += sampling_k_interval) {
             Eigen::JacobiSVD<Eigen::MatrixXd> svd(K[t], Eigen::ComputeFullV);
             if (!svd.computeV()) {
@@ -1176,61 +1028,61 @@ void iLQR_SVR::RemoveDofs(){
     }
 }
 
-void iLQR_SVR::AdjustCurrentStateVector(){
-    bool update_nominal = false;
-
-    std::vector<std::string> re_add_dofs = activeModelTranslator->RandomSampleUnusedDofs(num_dofs_readd);
-
-    if(!re_add_dofs.empty()){
-//        std::cout << "readding dofs ";
-//        for(const auto & re_add_dof : re_add_dofs){
-//            std::cout << re_add_dof << " ";
-//        }
-//        std::cout << "\n";
-        activeModelTranslator->UpdateCurrentStateVector(re_add_dofs, true);
-
-        update_nominal = true;
-    }
-
-    if(!activeModelTranslator->candidates_for_removal.empty()){
-
-//        std::cout << "removing dofs ";
-//        for(const auto & remove_dof : activeModelTranslator->candidates_for_removal){
-//            std::cout << remove_dof << " ";
-//        }
-//        std::cout << "\n";
-
-        activeModelTranslator->UpdateCurrentStateVector(activeModelTranslator->candidates_for_removal, false);
-
-        update_nominal = true;
-//        std::cout << "removing dofs, new num dofs: " << activeModelTranslator->dof << "\n";
-
-    }
-
-//    std::cout << "current state vector: ";
-//    for(int i = 0; i < activeModelTranslator->current_state_vector.state_names.size(); i++){
-//        std::cout << activeModelTranslator->current_state_vector.state_names[i] << " ";
+//void iLQR_SVR::AdjustCurrentStateVector(){
+//    bool update_nominal = false;
+//
+//    std::vector<std::string> re_add_dofs = activeModelTranslator->RandomSampleUnusedDofs(num_dofs_readd);
+//
+//    if(!re_add_dofs.empty()){
+////        std::cout << "readding dofs ";
+////        for(const auto & re_add_dof : re_add_dofs){
+////            std::cout << re_add_dof << " ";
+////        }
+////        std::cout << "\n";
+//        activeModelTranslator->UpdateCurrentStateVector(re_add_dofs, true);
+//
+//        update_nominal = true;
 //    }
-//    std::cout << "\n";
-//    std::cout << "unused state vector: ";
-//    for(int i = 0; i < activeModelTranslator->unused_state_vector_elements.size(); i++){
-//        std::cout << activeModelTranslator->unused_state_vector_elements[i] << " ";
+//
+//    if(!activeModelTranslator->candidates_for_removal.empty()){
+//
+////        std::cout << "removing dofs ";
+////        for(const auto & remove_dof : activeModelTranslator->candidates_for_removal){
+////            std::cout << remove_dof << " ";
+////        }
+////        std::cout << "\n";
+//
+//        activeModelTranslator->UpdateCurrentStateVector(activeModelTranslator->candidates_for_removal, false);
+//
+//        update_nominal = true;
+////        std::cout << "removing dofs, new num dofs: " << activeModelTranslator->dof << "\n";
+//
 //    }
-//    std::cout << "\n";
-
-    if(update_nominal){
-        Resize(activeModelTranslator->current_state_vector.dof,
-               activeModelTranslator->current_state_vector.num_ctrl, horizon_length);
-        X_old.at(0) = activeModelTranslator->ReturnStateVectorQuaternions(
-                MuJoCo_helper->saved_systems_state_list[0],
-                activeModelTranslator->current_state_vector);
-        for(int t = 0 ; t < horizon_length; t++) {
-            X_old.at(t + 1) = activeModelTranslator->ReturnStateVectorQuaternions(
-                    MuJoCo_helper->saved_systems_state_list[t + 1],
-                    activeModelTranslator->current_state_vector);
-        }
-    }
-}
+//
+////    std::cout << "current state vector: ";
+////    for(int i = 0; i < activeModelTranslator->current_state_vector.state_names.size(); i++){
+////        std::cout << activeModelTranslator->current_state_vector.state_names[i] << " ";
+////    }
+////    std::cout << "\n";
+////    std::cout << "unused state vector: ";
+////    for(int i = 0; i < activeModelTranslator->unused_state_vector_elements.size(); i++){
+////        std::cout << activeModelTranslator->unused_state_vector_elements[i] << " ";
+////    }
+////    std::cout << "\n";
+//
+//    if(update_nominal){
+//        Resize(activeModelTranslator->current_state_vector.dof,
+//               activeModelTranslator->current_state_vector.num_ctrl, horizon_length);
+//        X_old.at(0) = activeModelTranslator->ReturnStateVectorQuaternions(
+//                MuJoCo_helper->saved_systems_state_list[0],
+//                activeModelTranslator->current_state_vector);
+//        for(int t = 0 ; t < horizon_length; t++) {
+//            X_old.at(t + 1) = activeModelTranslator->ReturnStateVectorQuaternions(
+//                    MuJoCo_helper->saved_systems_state_list[t + 1],
+//                    activeModelTranslator->current_state_vector);
+//        }
+//    }
+//}
 
 void iLQR_SVR::UpdateNominal(){
     // Update the nominal state and control vector

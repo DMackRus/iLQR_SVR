@@ -1,6 +1,7 @@
 #include "ModelTranslator/PushBaseClass.h"
 
-PushBaseClass::PushBaseClass(std::string EE_name, std::string body_name){
+PushBaseClass::PushBaseClass(std::shared_ptr<FileHandler> yamlReader, std::string EE_name, std::string body_name)
+        : ModelTranslator(yamlReader) {
     this->EE_name = EE_name;
     this->body_name = body_name;
 }

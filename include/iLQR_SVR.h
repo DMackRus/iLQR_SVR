@@ -354,7 +354,7 @@ private:
     std::vector<int> timeIndicesGlobal;
 
     // Parametrisation of iLQR_SVR
-    bool eigen_vector_method = true;
+    bool svd_method = true;
     int sampling_k_interval = 1;
     int num_dofs_readd = 10;
     double K_matrix_threshold = 1; // maybe 0.001 or 0.0001
@@ -379,7 +379,7 @@ private:
 
     std::vector<int> num_dofs;
     double avg_dofs = 0.0;
-    
+
     std::vector<std::vector<int>> keypointsGlobal;
 
 };

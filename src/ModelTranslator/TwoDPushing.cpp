@@ -1,6 +1,10 @@
 #include "ModelTranslator/TwoDPushing.h"
 
-TwoDPushing::TwoDPushing(int _clutterLevel): PushBaseClass("franka_gripper", "goal"){
+TwoDPushing::TwoDPushing(std::shared_ptr<FileHandler> yamlReader, int _clutterLevel) : ModelTranslator(yamlReader),
+                                                                                       PushBaseClass(
+                                                                                               std::shared_ptr<FileHandler>(),
+                                                                                               "franka_gripper",
+                                                                                               "goal") {
 
     clutterLevel = _clutterLevel;
     std::string yamlFilePath = "/TaskConfigs/rigid_body_manipulation/twoD_push_no_clutter.yaml";

@@ -17,13 +17,7 @@ struct robot{
     std::string root_name;
     std::vector<std::string> joint_names;
     std::vector<std::string> actuator_names;
-
     std::vector<double> start_pos;
-//    std::vector<double> goal_pos;
-//    std::vector<double> goal_vel;
-
-    std::vector<double> jerk_thresholds;
-    std::vector<double> vel_change_thresholds;
 };
 
 struct rigid_body{
@@ -32,51 +26,20 @@ struct rigid_body{
     bool active_angular_dof[3];
     double start_linear_pos[3];
     double start_angular_pos[3];
-//    double goal_linear_pos[3];
-//    double goal_angular_pos[3];
-//    double linearPosCost[3];
-//    double terminal_linear_pos_cost[3];
-//    double linear_vel_cost[3];
-//    double terminal_linear_vel_cost[3];
-//    double angular_pos_cost[3];
-//    double terminal_angular_pos_cost[3];
-//    double angular_vel_cost[3];
-//    double terminal_angular_vel_cost[3];
-    double linear_jerk_threshold[3];
-    double angular_jerk_threshold[3];
-    double linear_vel_change_threshold[3];
-    double angular_vel_change_threshold[3];
 };
 
 struct vertex{
     bool active_linear_dof[3];
-    double linear_jerk_threshold[3];
-    double linear_vel_change_threshold[3];
 };
 
 struct soft_body{
     std::string name;
     int num_vertices;
-//    std::vector<bool> active_linear_dof;
     std::vector<vertex> vertices;
 
     // Centroid of the soft body
     double start_linear_pos[3];
     double start_angular_pos[3];
-//    double goal_linear_pos[3];
-//    double goal_angular_pos[3];
-//    double linearPosCost[3];
-//    double terminal_linear_pos_cost[3];
-//    double linear_vel_cost[3];
-//    double terminal_linear_vel_cost[3];
-//    double angular_pos_cost[3];
-//    double terminal_angular_pos_cost[3];
-//    double angular_vel_cost[3];
-//    double terminal_angular_vel_cost[3];
-
-    // Individual vertices specific
-//    std::vector<double> linear_jerk_threshold;
-//    std::vector<double> linear_vel_change_threshold;
 };
 
 struct residual{
@@ -94,16 +57,9 @@ struct task{
     double modelTimeStep;
     int openloop_horizon;
     int mpc_horizon;
+    int slowdown_factor;
     std::string modelName;
     std::string modelFilePath;
-    std::string keypointMethod;
-    bool auto_adjust;
-    int minN;
-    int maxN;
-    std::vector<double> jerkThresholds;
-    std::vector<double> acellThresholds;
-    double iterativeErrorThreshold;
-    std::vector<double> magVelThresholds;
     std::vector<residual> residuals;
 };
 

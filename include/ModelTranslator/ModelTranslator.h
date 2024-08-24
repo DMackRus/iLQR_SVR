@@ -42,7 +42,7 @@ public:
      * Construct a new Model Translator object.
      *
      */
-    ModelTranslator() = default;
+    ModelTranslator(std::shared_ptr<FileHandler> _yamlReader);
 
     /**
      * Update the state vector of the system by either adding or removing elements from
@@ -412,21 +412,17 @@ public:
     // model name
     std::string model_name = "undefined";
 
-    // Keypoint hyper parameters
-    std::string keypoint_method;
-    bool auto_adjust;
-    int min_N;
-    int max_N;
-    std::vector<double> jerk_thresholds;
-    std::vector<double> accel_thresholds;
-    double iterative_error_threshold;
-    std::vector<double> velocity_change_thresholds;
+    // Shared pointer to yaml reader
+    std::shared_ptr<FileHandler> yamlReader;
 
     // openloop_horizon
     int openloop_horizon;
 
     // MPC horizon
     int MPC_horizon;
+
+    // MPC slowdown factor
+    int slowdown_factor;
 
     vector<residual> residual_list;
 
