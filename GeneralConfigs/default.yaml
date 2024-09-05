@@ -28,7 +28,7 @@ runMode: "MPC_until_completion"
 # Special modes - possibly temporary
 # "Analyse_toy_contact"          - Analyse the derivatives in toy example with contact.
 
-taskInitMode: "fromCSV"    # taskInitMode can be, "random", "fromCSV", "fromYAML"
+taskInitMode: "fromYAML"    # taskInitMode can be, "random", "fromCSV", "fromYAML"
 csvRow: 0                 # CSV row to load if taskInitMode is "fromCSV" (0 - 99)
 
 minIter: 3                # Minimum number of iterations to run Optimiser for
