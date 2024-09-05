@@ -107,84 +107,83 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
     }
 }
 
+void PushSoft::ReturnRandomStartState(){
 
-//void PushSoft::ReturnRandomStartState(){
-//
-//    // Randomly generate a start and goal x and y position for cylinder
-//    // Random generate a goal x and y position for cylinder
-//    float startX = randFloat(0.5, 0.501);
-//    float startY = randFloat(0, 0.01);
-//
-//    float goalX = randFloat(0.65, 0.75);
-//    float goalY = randFloat(-0.1, 0.1);
-//
-//    // Place rigid object at
-//    randomGoalX = goalX;
-//    randomGoalY = goalY;
-//
-//    // Initialise soft body poses to start configuration
-//    for(auto & soft_body : full_state_vector.soft_bodies){
-//        pose_6 body_pose;
-//
-//        body_pose.position[0] = 0.0;
-//        body_pose.position[1] = 1.0;
-//        body_pose.position[2] = 0.0;
-//
-//        for(int i = 0; i < 3; i++){
-//            body_pose.orientation[i] = soft_body.start_angular_pos[i];
-//        }
-//
-//        // TODO - better way to do this where we use the spacing information and transforms
-//        for(int i = 0; i < soft_body.num_vertices; i++){
-//            MuJoCo_helper->SetSoftBodyVertexPos(soft_body.name, i, body_pose, MuJoCo_helper->main_data);
-//        }
-//    }
-//
-//    // step simulator
-//    for(int t = 0; t < 10; t++){
-//        mj_step(MuJoCo_helper->model, MuJoCo_helper->main_data);
-//    }
-//
-//    // Set up the goal positions and velocities
-//    // Robot start configuration
-//    double robot_start_config[7] = {0, 0.1, 0, -3, 0, 1.34, 0};
-//
-//    for(int i = 0; i < full_state_vector.robots[0].joint_names.size(); i++){
-//        full_state_vector.robots[0].start_pos[i] = robot_start_config[i];
-//    }
-//
-//    if(task_mode == PUSH_SOFT_RIGID){
-//        full_state_vector.rigid_bodies[0].start_linear_pos[0] = startX;
-//        full_state_vector.rigid_bodies[0].start_linear_pos[1] = startY;
-//        full_state_vector.rigid_bodies[0].start_linear_pos[2] = 0.032;
-//
-//        full_state_vector.rigid_bodies[0].start_angular_pos[0] = 0.0;
-//        full_state_vector.rigid_bodies[0].start_angular_pos[1] = 0.0;
-//        full_state_vector.rigid_bodies[0].start_angular_pos[2] = 0.0;
-//    }
-//
-//    // Soft body
-//    full_state_vector.soft_bodies[0].start_linear_pos[0] = -0.8;
-//    full_state_vector.soft_bodies[0].start_linear_pos[1] = 1.0;
-//    full_state_vector.soft_bodies[0].start_linear_pos[2] = 0.1;
-//    std::cout << "soft body x: " << full_state_vector.soft_bodies[0].start_linear_pos[0] << " y: " << full_state_vector.soft_bodies[0].start_linear_pos[1] << "\n";
-//    full_state_vector.soft_bodies[0].start_angular_pos[0] = 0.0;
-//    full_state_vector.soft_bodies[0].start_angular_pos[1] = 0.0;
-//    full_state_vector.soft_bodies[0].start_angular_pos[2] = 0.0;
-//
-//}
-//
-//void PushSoft::ReturnRandomGoalState(){
-//
-//    // Robot configuration doesnt matter for this task
+    // Randomly generate a start and goal x and y position for cylinder
+    // Random generate a goal x and y position for cylinder
+    float startX = randFloat(0.5, 0.501);
+    float startY = randFloat(0, 0.01);
+
+    float goalX = randFloat(0.65, 0.75);
+    float goalY = randFloat(-0.1, 0.1);
+
+    // Place rigid object at
+    randomGoalX = goalX;
+    randomGoalY = goalY;
+
+    // Initialise soft body poses to start configuration
+    for(auto & soft_body : full_state_vector.soft_bodies){
+        pose_6 body_pose;
+
+        body_pose.position[0] = 0.0;
+        body_pose.position[1] = 1.0;
+        body_pose.position[2] = 0.0;
+
+        for(int i = 0; i < 3; i++){
+            body_pose.orientation[i] = soft_body.start_angular_pos[i];
+        }
+
+        // TODO - better way to do this where we use the spacing information and transforms
+        for(int i = 0; i < soft_body.num_vertices; i++){
+            MuJoCo_helper->SetSoftBodyVertexPos(soft_body.name, i, body_pose, MuJoCo_helper->main_data);
+        }
+    }
+
+    // step simulator
+    for(int t = 0; t < 10; t++){
+        mj_step(MuJoCo_helper->model, MuJoCo_helper->main_data);
+    }
+
+    // Set up the goal positions and velocities
+    // Robot start configuration
+    double robot_start_config[7] = {0, 0.1, 0, -3, 0, 1.34, 0};
+
+    for(int i = 0; i < full_state_vector.robots[0].joint_names.size(); i++){
+        full_state_vector.robots[0].start_pos[i] = robot_start_config[i];
+    }
+
+    if(task_mode == PUSH_SOFT_RIGID){
+        full_state_vector.rigid_bodies[0].start_linear_pos[0] = startX;
+        full_state_vector.rigid_bodies[0].start_linear_pos[1] = startY;
+        full_state_vector.rigid_bodies[0].start_linear_pos[2] = 0.032;
+
+        full_state_vector.rigid_bodies[0].start_angular_pos[0] = 0.0;
+        full_state_vector.rigid_bodies[0].start_angular_pos[1] = 0.0;
+        full_state_vector.rigid_bodies[0].start_angular_pos[2] = 0.0;
+    }
+
+    // Soft body
+    full_state_vector.soft_bodies[0].start_linear_pos[0] = -0.8;
+    full_state_vector.soft_bodies[0].start_linear_pos[1] = 1.0;
+    full_state_vector.soft_bodies[0].start_linear_pos[2] = 0.1;
+    std::cout << "soft body x: " << full_state_vector.soft_bodies[0].start_linear_pos[0] << " y: " << full_state_vector.soft_bodies[0].start_linear_pos[1] << "\n";
+    full_state_vector.soft_bodies[0].start_angular_pos[0] = 0.0;
+    full_state_vector.soft_bodies[0].start_angular_pos[1] = 0.0;
+    full_state_vector.soft_bodies[0].start_angular_pos[2] = 0.0;
+
+}
+
+void PushSoft::ReturnRandomGoalState(){
+
+    // Robot configuration doesnt matter for this task
 //    for(int i = 0; i < full_state_vector.robots[0].joint_names.size(); i++){
 //        full_state_vector.robots[0].goal_pos[i] = 0.0;
 //        full_state_vector.robots[0].goal_vel[i] = 0.0;
 //    }
-//
-//    if(task_mode == PUSH_SOFT){
-//
-//        // Soft body distractor
+
+    if(task_mode == PUSH_SOFT){
+
+        // Soft body distractor
 //        full_state_vector.soft_bodies[0].goal_linear_pos[0] = randomGoalX;
 //        full_state_vector.soft_bodies[0].goal_linear_pos[1] = randomGoalY;
 //        full_state_vector.soft_bodies[0].goal_linear_pos[2] = 0.0;
@@ -192,9 +191,9 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
 //        full_state_vector.soft_bodies[0].goal_angular_pos[0] = 0.0;
 //        full_state_vector.soft_bodies[0].goal_angular_pos[1] = 0.0;
 //        full_state_vector.soft_bodies[0].goal_angular_pos[2] = 0.0;
-//    }
-//    else if(task_mode == PUSH_SOFT_RIGID){
-//        // Goal object body
+    }
+    else if(task_mode == PUSH_SOFT_RIGID){
+        // Goal object body
 //        full_state_vector.rigid_bodies[0].goal_linear_pos[0] = randomGoalX;
 //        full_state_vector.rigid_bodies[0].goal_linear_pos[1] = randomGoalY;
 //        full_state_vector.rigid_bodies[0].goal_linear_pos[2] = 0.0;
@@ -211,11 +210,11 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
 //        full_state_vector.soft_bodies[0].goal_angular_pos[0] = 0.0;
 //        full_state_vector.soft_bodies[0].goal_angular_pos[1] = 0.0;
 //        full_state_vector.soft_bodies[0].goal_angular_pos[2] = 0.0;
-//    }
-//
-//
-//
-//}
+    }
+
+
+
+}
 //
 ////std::vector<MatrixXd> PushSoft::CreateInitSetupControls(int horizonLength){
 ////    std::vector<MatrixXd> initSetupControls;
@@ -291,48 +290,48 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
 //    return initControls;
 //}
 
-//bool PushSoft::TaskComplete(mjData *d, double &dist){
-//    bool taskComplete = false;
-//
-//    if(task_mode == PUSH_SOFT){
-//        // Minimise the sum of all vertices from the goal position
-//        dist = 0.0;
-//        pose_6 vertex_pose;
-//        for(int i = 0; i < full_state_vector.soft_bodies[0].num_vertices; i++){
-//            MuJoCo_helper->GetSoftBodyVertexPosGlobal(full_state_vector.soft_bodies[0].name, i, vertex_pose, d);
-//            // TODO - fix this!
-////            double diffX = full_state_vector.soft_bodies[0].goal_linear_pos[0] - vertex_pose.position[0];
-////            double diffY = full_state_vector.soft_bodies[0].goal_linear_pos[1] - vertex_pose.position[1];
-////            dist += sqrt(pow(diffX, 2) + pow(diffY, 2));
-//        }
-//
-//        // dist = 15
-////        std::cout << "dist: " << dist << "\n";
-////        if(dist < 3.0){
-////            taskComplete = true;
-////        }
-//
-//    }
-//    else if(task_mode == PUSH_SOFT_RIGID){
-//        pose_6 goal_pose;
-//        MuJoCo_helper->GetBodyPoseAngle("goal", goal_pose, d);
-//
-//        // TODO - fix this!
-////        double x_diff = goal_pose.position(0) - full_state_vector.rigid_bodies[0].goal_linear_pos[0];
-////        double y_diff = goal_pose.position(1) - full_state_vector.rigid_bodies[0].goal_linear_pos[1];
-////        dist = sqrt(pow(x_diff, 2) + pow(y_diff, 2));
-//
-////    std::cout << "dist: " << dist << "\n";
-//        if(dist < 0.03){
+bool PushSoft::TaskComplete(mjData *d, double &dist){
+    bool taskComplete = false;
+
+    if(task_mode == PUSH_SOFT){
+        // Minimise the sum of all vertices from the goal position
+        dist = 0.0;
+        pose_6 vertex_pose;
+        for(int i = 0; i < full_state_vector.soft_bodies[0].num_vertices; i++){
+            MuJoCo_helper->GetSoftBodyVertexPosGlobal(full_state_vector.soft_bodies[0].name, i, vertex_pose, d);
+            // TODO - fix this!
+//            double diffX = full_state_vector.soft_bodies[0].goal_linear_pos[0] - vertex_pose.position[0];
+//            double diffY = full_state_vector.soft_bodies[0].goal_linear_pos[1] - vertex_pose.position[1];
+//            dist += sqrt(pow(diffX, 2) + pow(diffY, 2));
+        }
+
+        // dist = 15
+//        std::cout << "dist: " << dist << "\n";
+//        if(dist < 3.0){
 //            taskComplete = true;
 //        }
-//
-//        // if weve pushed too far in x direction, the task should stop
-////        if(x_diff > 0.08){
-////            taskComplete = true;
-////            std::cout << "pushed too far \n";
-////        }
-//    }
-//
-//    return taskComplete;
-//}
+
+    }
+    else if(task_mode == PUSH_SOFT_RIGID){
+        pose_6 goal_pose;
+        MuJoCo_helper->GetBodyPoseAngle("goal", goal_pose, d);
+
+        // TODO - fix this!
+//        double x_diff = goal_pose.position(0) - full_state_vector.rigid_bodies[0].goal_linear_pos[0];
+//        double y_diff = goal_pose.position(1) - full_state_vector.rigid_bodies[0].goal_linear_pos[1];
+//        dist = sqrt(pow(x_diff, 2) + pow(y_diff, 2));
+
+//    std::cout << "dist: " << dist << "\n";
+        if(dist < 0.03){
+            taskComplete = true;
+        }
+
+        // if weve pushed too far in x direction, the task should stop
+//        if(x_diff > 0.08){
+//            taskComplete = true;
+//            std::cout << "pushed too far \n";
+//        }
+    }
+
+    return taskComplete;
+}

@@ -11,13 +11,13 @@ enum task_mode{
 class PushSoft: virtual public ModelTranslator, public PushBaseClass{
 public:
     PushSoft(std::shared_ptr<FileHandler> yamlReader, int _task_mode);
-//
-//    void ReturnRandomStartState() override;
-//    void ReturnRandomGoalState() override;
-//    std::vector<MatrixXd> CreateInitOptimisationControls(int horizonLength) override;
-////    std::vector<MatrixXd> CreateInitSetupControls(int horizonLength) override;
-//
-//    bool TaskComplete(mjData *d, double &dist) override;
+
+    void ReturnRandomStartState() override;
+    void ReturnRandomGoalState() override;
+    std::vector<MatrixXd> CreateInitOptimisationControls(int horizonLength) override;
+//    std::vector<MatrixXd> CreateInitSetupControls(int horizonLength) override;
+
+    bool TaskComplete(mjData *d, double &dist) override;
 
     void Residuals(mjData *d, MatrixXd &residuals);
 
@@ -25,5 +25,4 @@ private:
     int task_mode = PUSH_SOFT;
     double randomGoalX = 0.0;
     double randomGoalY = 0.0;
-
 };

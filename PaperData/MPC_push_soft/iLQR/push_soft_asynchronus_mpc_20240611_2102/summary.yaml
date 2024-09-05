@@ -1,0 +1,4 @@
+optimisation horizon: 50
+controls_noise: 0
+keypoint_name: SI_1
+model timestep: 0.004

@@ -1,0 +1,7 @@
+optimisation horizon: 80
+controls_noise: 0
+keypoint_name: SI_1
+model timestep: 0.004
+num_dofs_readd: 5
+K_matrix_threshold: 10
+Eigen vector method: false

@@ -1,0 +1,18 @@
+Costs used to perform these asyncronus MPC results were
+
+Robot velocities
+jointVelCosts: [0.1, 0.1, 0.1, 0.01, 0, 0.1, 0]
+
+goal linear
+linearPosCost: [ 8, 8, 0 ]
+goal velocity
+linear_vel_cost: [ 1.5, 1.5, 0 ]
+
+Distractor objects
+linearPosCost: [4, 4, 0]
+
+terminal pos cost used only for final evaluation. of pos costs of all objects, goal + distractor.
+
+Summing method
+no delay in vis thread
+
