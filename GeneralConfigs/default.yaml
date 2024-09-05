@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------------------------------------
 
 # Task to be performed
-task: "pushing_moderate_clutter"
+task: "push_soft"
 # -----------------------------  Task list ------------------------------------
 #
 # "pushing_moderate_clutter" - Moderate clutter pushing task

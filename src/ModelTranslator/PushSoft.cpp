@@ -20,6 +20,94 @@ PushSoft::PushSoft(std::shared_ptr<FileHandler> yamlReader, int _task_mode) : Mo
     InitModelTranslator(yamlFilePath);
 }
 
+void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
+    int resid_index = 0;
+
+    // Compute kinematics chain to compute site poses
+    mj_kinematics(MuJoCo_helper->model, d);
+//    mj_forwardSkip(MuJoCo_helper->model, d, mjSTAGE_NONE, 1);
+
+    if(task_mode == PUSH_SOFT){
+        // Compute the pose of the soft body
+        pose_6 soft_body_accumulator;
+        soft_body_accumulator.position.setZero();
+
+        pose_6 body_pose;
+
+        for(int i = 0; i < full_state_vector.soft_bodies[0].num_vertices; i++){
+
+            MuJoCo_helper->GetSoftBodyVertexPos(full_state_vector.soft_bodies[0].name, i, body_pose, d);
+
+            soft_body_accumulator.position(0) += body_pose.position(0);
+            soft_body_accumulator.position(1) += body_pose.position(1);
+            soft_body_accumulator.position(2) += body_pose.position(2);
+
+        }
+
+        soft_body_accumulator.position(0) /= full_state_vector.soft_bodies[0].num_vertices;
+        soft_body_accumulator.position(1) /= full_state_vector.soft_bodies[0].num_vertices;
+
+        // 2D euclidean distance between the goal and the soft body
+        double diff_x = soft_body_accumulator.position(0) - residual_list[0].target[0];
+        double diff_y = soft_body_accumulator.position(1) - residual_list[0].target[1];
+        residuals(resid_index++, 0) = sqrt(pow(diff_x, 2)
+                                           + pow(diff_y, 2));
+
+        // Compute average velocity of the soft body
+
+    }
+
+//    int num_obstacles = 0;
+//
+//    pose_6 goal_pose;
+//    pose_6 goal_vel;
+//    MuJoCo_helper->GetBodyPoseAngle("goal", goal_pose, d);
+//    MuJoCo_helper->GetBodyVelocity("goal", goal_vel, d);
+//
+//    // --------------- Residual 0: Body goal position -----------------
+//    double diff_x = goal_pose.position(0) - residual_list[0].target[0];
+//    double diff_y = goal_pose.position(1) - residual_list[0].target[1];
+//    residuals(resid_index++, 0) = sqrt(pow(diff_x, 2)
+//                                       + pow(diff_y, 2));
+//
+//    // --------------- Residual 1: Body goal velocity -----------------
+//    residuals(resid_index++, 0) = sqrt(pow(goal_vel.position(0), 2)
+//                                       + pow(goal_vel.position(1), 2));
+//
+//    // Residuals 2 -> 2 + num_obstacles: Obstacle positions
+//    for(int i = 0; i < num_obstacles; i++){
+//        pose_6 obstacle_pose;
+//        MuJoCo_helper->GetBodyPoseAngle("obstacle_" + std::to_string(i + 1), obstacle_pose, d);
+//
+//        diff_x = obstacle_pose.position(0) - full_state_vector.rigid_bodies[i + 1].start_linear_pos[0];
+//        diff_y = obstacle_pose.position(1) - full_state_vector.rigid_bodies[i + 1].start_linear_pos[1];
+//
+//        residuals(resid_index++, 0) = sqrt(pow(diff_x, 2)
+//                                           + pow(diff_y, 2));
+//    }
+//
+//    // --------------- Residual 3 + num_obstacles: Joint velocity -----------------
+//    std::vector<double> joint_velocities;
+//    MuJoCo_helper->GetRobotJointsVelocities("panda", joint_velocities, d);
+//    residuals(resid_index++, 0) = joint_velocities[5];
+//
+//    // --------------- Residual 4 + num_obstacles: EE position towards goal object -----------------
+//    pose_7 EE_pose;
+//    MuJoCo_helper->GetBodyPoseQuatViaXpos("franka_gripper", EE_pose, d);
+//    diff_x = EE_pose.position(0) - goal_pose.position(0);
+//    diff_y = EE_pose.position(1) - goal_pose.position(1);
+//    double diff_z = EE_pose.position(2) - goal_pose.position(2);
+//    residuals(resid_index++, 0) = sqrt(pow(diff_x, 2)
+//                                       + pow(diff_y, 2)
+//                                       + pow(diff_z, 2));
+
+    if(resid_index != residual_list.size()){
+        std::cerr << "Error: Residuals size mismatch\n";
+        exit(1);
+    }
+}
+
+
 //void PushSoft::ReturnRandomStartState(){
 //
 //    // Randomly generate a start and goal x and y position for cylinder

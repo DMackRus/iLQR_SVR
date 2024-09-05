@@ -353,11 +353,12 @@ private:
     int num_threads_iterations;
     std::vector<int> timeIndicesGlobal;
 
-    // Parametrisation of iLQR_SVR
-    bool svd_method = true;
+    // Parametrisation of iLQR / iLQR_SVR optimiser
+    std::string method = "iLQR_SVR_Sum";   // Valid methods are; iLQR, iLQR_SVR_Sum, iLQR_SVR_SVD and iLQR_SVR_Set
     int sampling_k_interval = 1;
     int num_dofs_readd = 10;
     double K_matrix_threshold = 1; // maybe 0.001 or 0.0001
+    int fixed_state_vector_size = 0;
     // When eigen vector 0.1, 0.2, 0.5
     // WHen just summing numbers went from 1 -> 2000
 //    double threshold_k_eigenvectors = 0.1;

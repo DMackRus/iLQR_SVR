@@ -55,6 +55,14 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         _taskConfig.slowdown_factor = 1;
     }
 
+    // Optimiser method
+    if(node["method"]){
+        method = node["method"].as<string>();
+    }
+    else{
+        method = "iLQR_SVR_Sum";
+    }
+
     // K Matrix thresholds
     if(node["K_matrix_thresholds"]){
         K_matrix_thresholds = node["K_matrix_thresholds"].as<double>();
@@ -71,13 +79,15 @@ void FileHandler::ReadModelConfigFile(const std::string& yamlFilePath, task &_ta
         theta = 1;
     }
 
-    // SVD method
-    if(node["svd"]){
-        svd_method = node["svd"].as<bool>();
+    // Fixed state vector size - if were using iLQR_SVR_Set
+    if(node["fixed_state_vector_size"]){
+        fixed_state_vector_size = node["fixed_state_vector_size"].as<int>();
     }
     else{
-        svd_method = false;
+        fixed_state_vector_size = 0;
     }
+
+
 
     // Loop through robots
     for(YAML::const_iterator robot_it=node["robots"].begin(); robot_it!=node["robots"].end(); ++robot_it){

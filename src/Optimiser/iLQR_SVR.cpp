@@ -32,11 +32,12 @@ iLQR_SVR::iLQR_SVR(std::shared_ptr<ModelTranslator> _modelTranslator, std::share
     }
 
     // Setup iLQR_SVR method from YAML file settings
+    method = activeYamlReader->method;
     K_matrix_threshold = activeYamlReader->K_matrix_thresholds;
     num_dofs_readd = activeYamlReader->theta;
-    svd_method = activeYamlReader->svd_method;
+    fixed_state_vector_size = activeYamlReader->fixed_state_vector_size;
 
-    std::cout << "K threshold: " << K_matrix_threshold << " theta: " << num_dofs_readd << " svd method: " << svd_method << std::endl;
+    std::cout << "Optimiser method: " << method << ", K threshold: " << K_matrix_threshold << " theta: " << num_dofs_readd << std::endl;
 
     rollout_data.resize(num_parallel_rollouts);
 
@@ -406,11 +407,13 @@ std::vector<MatrixXd> iLQR_SVR::Optimise(mjData *d, std::vector<MatrixXd> initia
 
 void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
 
-    // Resample new dofs - subject to criteria
-    // Adjust state vector - remove candidates for removal
-    ResampleNewDofs();
-    num_dofs.push_back(activeModelTranslator->current_state_vector.dof);
-    dof_used_last_optimisation = activeModelTranslator->current_state_vector.dof;
+    // If we are using vanilla iLQR - we dont need to resample DoFs
+    if(method != "iLQR"){
+        // Resample new dofs - subject to criteria
+        ResampleNewDofs();
+        num_dofs.push_back(activeModelTranslator->current_state_vector.dof);
+        dof_used_last_optimisation = activeModelTranslator->current_state_vector.dof;
+    }
 
     // STEP 1 - Generate dynamics derivatives and cost derivatives
     auto timer_start = high_resolution_clock::now();
@@ -436,7 +439,11 @@ void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
     }
 
     // Check importance of dofs
-    activeModelTranslator->candidates_for_removal = LeastImportantDofs();
+    if(method != "iLQR"){
+        // Compute least important DoFs in this optimisation
+        activeModelTranslator->candidates_for_removal = LeastImportantDofs();
+    }
+
 
     // TODO - remove temp code
 //    std::cout << "dofs to remove: ";
@@ -525,7 +532,10 @@ void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
         if(lambda > max_lambda) lambda = max_lambda;
     }
 
-    RemoveDofs();
+    if(method != "iLQR"){
+        // Remove dofs that are not important
+        RemoveDofs();
+    }
 }
 
 
@@ -897,8 +907,8 @@ std::vector<std::string> iLQR_SVR::LeastImportantDofs(){
     std::vector<std::string> remove_dofs;
     std::vector<double> K_dofs_sums(dof, 0.0);
 
-    // ---------------------------- Eigen vector method ---------------------------------------------
-    if(svd_method){
+    // ---------------------------- SVD method ---------------------------------------------
+    if(method == "iLQR_SVR_SVD"){
         for(int t = 0; t < horizon_length; t += sampling_k_interval) {
             Eigen::JacobiSVD<Eigen::MatrixXd> svd(K[t], Eigen::ComputeFullV);
             if (!svd.computeV()) {
@@ -929,17 +939,17 @@ std::vector<std::string> iLQR_SVR::LeastImportantDofs(){
             K_dofs_sums[i] /= horizon_length;
         }
 
-//        std::cout << "States: ";
-//        for(int i = 0; i < dof; i++){
-//            std::cout << state_vector_name[sorted_indices[i]] << " ";
-//        }
-//        std::cout << "\n";
-//
-//        std::cout << "K_sums in order: ";
-//        for(int i = 0; i < dof; i++){
-//            std::cout << K_dofs_sums[sorted_indices[i]] << " ";
-//        }
-//        std::cout << "\n";
+        std::cout << "States: ";
+        for(int i = 0; i < dof; i++){
+            std::cout << state_vector_name[sorted_indices[i]] << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "K_sums in order: ";
+        for(int i = 0; i < dof; i++){
+            std::cout << K_dofs_sums[sorted_indices[i]] << " ";
+        }
+        std::cout << "\n";
 
 
         for(int i = 0; i < dof; i++) {
@@ -949,7 +959,7 @@ std::vector<std::string> iLQR_SVR::LeastImportantDofs(){
         }
     }
     //------------------------ Sampling and summing method ----------------------------
-    else{
+    else if(method == "iLQR_SVR_Sum"){
         for(int t = 0; t < horizon_length; t += sampling_k_interval){
 
             for(int i = 0; i < activeModelTranslator->current_state_vector.dof; i++){
@@ -981,12 +991,49 @@ std::vector<std::string> iLQR_SVR::LeastImportantDofs(){
 //        }
 //        std::cout << "\n";
 
-
         for(int i = 0; i < activeModelTranslator->current_state_vector.dof; i++) {
             if (K_dofs_sums[i] < K_matrix_threshold) {
                 remove_dofs.push_back(state_vector_name[i]);
             }
         }
+    }
+    else if(method == "iLQR_SVR_Set"){
+        for(int t = 0; t < horizon_length; t += sampling_k_interval){
+            for(int i = 0; i < activeModelTranslator->current_state_vector.dof; i++){
+                for(int j = 0; j < num_ctrl; j++){
+                    K_dofs_sums[i] += abs(K[t](j, i));
+                    K_dofs_sums[i] += abs(K[t](j, i + activeModelTranslator->current_state_vector.dof));
+                }
+            }
+        }
+
+        // Normalise K_dofs_sum by horizon_length
+        for(int i = 0; i < activeModelTranslator->current_state_vector.dof; i++){
+            K_dofs_sums[i] /= horizon_length;
+        }
+
+        std::vector<int> sorted_indices = SortIndices(K_dofs_sums, false);
+        std::vector<std::string> state_vector_name = activeModelTranslator->current_state_vector.state_names;
+
+        std::cout << "States: ";
+        for(int i = 0; i < dof; i++){
+            std::cout << state_vector_name[sorted_indices[i]] << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "K_sums in order: ";
+        for(int i = 0; i < dof; i++){
+            std::cout << K_dofs_sums[sorted_indices[i]] << " ";
+        }
+        std::cout << "\n";
+
+        for(int i = fixed_state_vector_size; i < dof; i++) {
+            remove_dofs.push_back(state_vector_name[sorted_indices[i]]);
+        }
+    }
+    else{
+        std::cerr << "Invalid method for determining least important dofs" << std::endl;
+        exit(1);
     }
 
     return remove_dofs;

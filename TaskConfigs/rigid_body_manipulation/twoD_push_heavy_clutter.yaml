@@ -3,12 +3,12 @@ modelName: "/push_mcl"
 timeStep: 0.004
 openloop_horizon: 2000
 mpc_horizon: 50
+
 MPC_slowdown_factor: 1
-
-svd: false
+method: "iLQR_SVR_Set"      # Allowed methods are ["iLQR", "iLQR_SVR_Sum", "iLQR_SVR_SVD", "iLQR_SVR_Set"]
 K_matrix_threshold: 1
-theta: 5
-
+theta: 1
+fixed_state_vector_size: 15
 
 robots:
   panda:
@@ -17,8 +17,6 @@ robots:
     torqueControl: true
     torqueLimits: [87, 87, 87, 87, 12, 12, 12]
     startPos: [0, -0.183, 0, -3.1, 0, 1.34, 0]
-    jointJerkThresholds: [10, 10, 10, 10, 10, 10, 10]
-    magVelThresholds: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 bodies:
   goal:
     activeLinearDOF: [true, true, true]

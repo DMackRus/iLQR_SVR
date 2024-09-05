@@ -34,12 +34,11 @@ public:
     int minIter;
     int maxIter;
 
-    int slow_down_factor;
-
-    // --- iLQR_SVR Settings ---
+    // --- Optimiser settings ---
+    std::string method;
     double K_matrix_thresholds;
     int theta;
-    bool svd_method;
+    int fixed_state_vector_size;
 
 private:
     std::string projectParentPath;

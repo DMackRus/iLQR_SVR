@@ -19,6 +19,8 @@ public:
 //
 //    bool TaskComplete(mjData *d, double &dist) override;
 
+    void Residuals(mjData *d, MatrixXd &residuals);
+
 private:
     int task_mode = PUSH_SOFT;
     double randomGoalX = 0.0;
