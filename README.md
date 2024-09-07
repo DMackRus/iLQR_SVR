@@ -65,11 +65,12 @@ installation and setup.
 -  Setup the Task YAML (push_moderate_clutter.yaml) to change task sepcific settings (opt horizon, slowdown factor, parametrisation of iLQR_SVR)
 
 ## TODO
+- Add K matrix feedback to MPC.
+- Fix init controls for soft tasks. Make it automatic rather than manual.
+- Fix MuJoCo build and plugins so people can automatically use latest MuJoCo release.
 - Improve readme documentation
-- Add slowdown factor to YAML settings
 - Add media to Github
 - Better residuals for push soft task
-- Rho and Theta in Yaml settings
 
 ## Citing
 TODO - Add citation infomation.
