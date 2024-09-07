@@ -92,6 +92,22 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
     // If task = push soft into rigid
     else{
 
+        // --------------- Residual 0 - distance between rigid body and goal -----------------
+        pose_6 rigid_body_pose;
+        MuJoCo_helper->GetBodyPoseAngle("goal", rigid_body_pose, d);
+
+        double dist = sqrt(pow(rigid_body_pose.position(0) - residual_list[0].target[0], 2)
+                           + pow(rigid_body_pose.position(1) - residual_list[0].target[1], 2));
+
+        residuals(resid_index++, 0) = dist;
+
+        // --------------- Residual 1 - rigid body velocity -----------------
+        pose_6 rigid_body_vel;
+        MuJoCo_helper->GetBodyVelocity("goal", rigid_body_vel, d);
+
+        residuals(resid_index++, 0) = sqrt(pow(rigid_body_vel.position(0), 2)
+                                           + pow(rigid_body_vel.position(1), 2));
+
     }
 
 //    int num_obstacles = 0;
@@ -369,9 +385,9 @@ bool PushSoft::TaskComplete(mjData *d, double &dist){
 //        dist = sqrt(pow(x_diff, 2) + pow(y_diff, 2));
 
 //    std::cout << "dist: " << dist << "\n";
-        if(dist < 0.03){
-            taskComplete = true;
-        }
+//        if(dist < 0.03){
+//            taskComplete = true;
+//        }
 
         // if weve pushed too far in x direction, the task should stop
 //        if(x_diff > 0.08){

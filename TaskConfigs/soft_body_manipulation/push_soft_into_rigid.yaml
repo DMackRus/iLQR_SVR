@@ -3,11 +3,13 @@ modelName: "/push_soft_into_rigid"
 timeStep: 0.004
 openloop_horizon: 2000
 mpc_horizon: 100
-keypointMethod: "set_interval"   # Possible values: "set_interval", "adaptive_jerk", "adaptive_accel", "iterative_error, "velocity_change"
-auto_adjust: false
-minN: 1
-maxN: 10
-iterativeErrorThreshold: 0.00001
+
+MPC_slowdown_factor: 5
+method: "iLQR_SVR_Set"      # Allowed methods are ["iLQR", "iLQR_SVR_Sum", "iLQR_SVR_SVD", "iLQR_SVR_Set"]
+K_matrix_threshold: 1
+theta: 5
+fixed_state_vector_size: 15
+
 robots:
   panda:
     jointNames: ["panda0_joint1", "panda0_joint2", "panda0_joint3", "panda0_joint4", "panda0_joint5", "panda0_joint6", "panda0_joint7"]
@@ -21,19 +23,7 @@ bodies:
     activeAngularDOF: [false, false, false]
     startLinearPos: [ 0.5, 0, 0.0 ]
     startAngularPos: [ 0, 0, 0 ]
-#    goalLinearPos: [ 0.75, 0.1, 0.0 ]
-#    goalAngularPos: [ 0, 0, 0 ]
-#    linearPosCost: [100, 100, 0]  # 3, 6, 0
-#    linearVelCost: [0.1, 0.1, 0]
-#    terminalLinearVelCost: [0, 0, 0]
-#    angularPosCost: [0, 0, 0]
-#    terminalAngularPosCost: [0, 0, 0]
-#    angularVelCost: [0, 0, 0]
-#    terminalAngularVelCost: [0, 0, 0]
-#    linearJerkThreshold: [ 0.0005, 0.0005, 0.0005 ]
-#    angularJerkThreshold: [ 0.003, 0.003, 0.003 ]
-#    linearMagVelThreshold: [ 0.1, 0.1, 0.1 ]
-#    angularMagVelThreshold: [ 0.1, 0.1, 0.1 ]
+
 soft_bodies:
   jelly:
     num_vertices: 48
@@ -43,9 +33,10 @@ soft_bodies:
 
 residuals:
   goal_pos:
-    target: [0.75, 0.1]
-    weight: 0.1
+    target: [0.75, -0.1]
+    weight: 100
+    weight_terminal: 100  # 1000 when long horizon
+  vel:
+    target: [0]
+    weight: 0.01
     weight_terminal: 0  # 1000 when long horizon
-#  vel:
-#    weight: 0.1
-#    weight_terminal: 0  # 1000 when long horizon
