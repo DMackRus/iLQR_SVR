@@ -12,7 +12,7 @@ public:
     void EEWayPointsSetup(m_point desiredObjectEnd,
                           std::vector<m_point>& mainWayPoints, std::vector<int>& wayPointsTiming, int horizon);
 
-    void EEWayPointsPush(m_point desiredObjectEnd,
+    void EEWayPointsPush(m_point object_start, m_point object_end,
                          std::vector<m_point>& mainWayPoints, std::vector<int>& wayPointsTiming, int horizon);
 
     std::vector<m_point> CreateAllEETransitPoints(const std::vector<m_point> &mainWayPoints, const std::vector<int> &wayPointsTiming);

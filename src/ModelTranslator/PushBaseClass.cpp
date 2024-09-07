@@ -43,75 +43,144 @@ void PushBaseClass::EEWayPointsSetup(m_point desiredObjectEnd,
     wayPointsTiming.push_back(horizon - 1);
 }
 
-void PushBaseClass::EEWayPointsPush(m_point desiredObjectEnd,
-                                    std::vector<m_point>& mainWayPoints, std::vector<int>& wayPointsTiming, int horizon){
-
+void PushBaseClass::EEWayPointsPush(m_point object_start, m_point object_end,
+                     std::vector<m_point>& mainWayPoints, std::vector<int>& wayPointsTiming, int horizon){
     pose_6 EE_startPose;
-    pose_6 goalobj_startPose;
     MuJoCo_helper->GetBodyPoseAngleViaXpos(EE_name, EE_startPose, MuJoCo_helper->main_data);
-    MuJoCo_helper->GetBodyPoseAngle(body_name, goalobj_startPose, MuJoCo_helper->main_data);
 
+    // First waypoint - where the End effector currently is
     m_point mainWayPoint;
-    // First waypoint - where the end-effector is currently
     mainWayPoint << EE_startPose.position(0), EE_startPose.position(1), EE_startPose.position(2);
     mainWayPoints.push_back(mainWayPoint);
     wayPointsTiming.push_back(0);
 
     // Calculate the angle of approach - from goal position to object start position
-    double angle_EE_push;
-    double x_diff = desiredObjectEnd(0) - goalobj_startPose.position(0);
-    double y_diff = desiredObjectEnd(1) - goalobj_startPose.position(1);
-//    double x_diff = desiredObjectEnd(0) - EE_startPose.position(0);
-//    double y_diff = desiredObjectEnd(1) - EE_startPose.position(1);
-    angle_EE_push = atan2(y_diff, x_diff);
+//    double angle_EE_push;
+//    double x_diff = object_end(0) - object_start(0);
+//    double y_diff = object_end(1) - object_start(1);
+//    angle_EE_push = atan2(y_diff, x_diff);
+//
+//    // TODO hard coded - get it programmatically?
+//    double cylinder_radius = 0.01;
+//    double x_cylinder0ffset = cylinder_radius * cos(angle_EE_push);
+//    double y_cylinder0ffset = cylinder_radius * sin(angle_EE_push);
+//
+//    double desired_endPointX = object_end(0) - x_cylinder0ffset;
+//    double desired_endPointY;
+//
+//    double endPointX;
+//    double endPointY;
+//    if(object_end(1) - object_start(1) > 0){
+//        desired_endPointY = object_end(1) + y_cylinder0ffset;
+//    }
+//    else{
+//        desired_endPointY = object_end(1) - y_cylinder0ffset;
+//    }
+//
+//    double intermediatePointY = object_start(1);
+//    double intermediatePointX = object_start(0);
+////    double intermediatePointY = EE_startPose.position(1);
+////    double intermediatePointX = EE_startPose.position(0);
+//
+//    // Max speed could be a parameter
+//    double maxDistTravelled = 0.1 * ((5.0f/6.0f) * horizon * MuJoCo_helper->ReturnModelTimeStep());
+//    // float maxDistTravelled = 0.05 * ((5.0f/6.0f) * horizon * MUJOCO_DT);
+////    cout << "max EE travel dist: " << maxDistTravelled << endl;
+//    double desiredDistTravelled = sqrt(pow((desired_endPointX - intermediatePointX),2) + pow((desired_endPointY - intermediatePointY),2));
+//    double proportionOfDistTravelled = maxDistTravelled / desiredDistTravelled;
+////    cout << "proportion" << proportionOfDistTravelled << endl;
+//    if(proportionOfDistTravelled > 1){
+//        endPointX = desired_endPointX;
+//        endPointY = desired_endPointY;
+//    }
+//    else{
+//        endPointX = intermediatePointX + ((desired_endPointX - intermediatePointX) * proportionOfDistTravelled);
+//        endPointY = intermediatePointY + ((desired_endPointY - intermediatePointY) * proportionOfDistTravelled);
+//    }
+//
+//    mainWayPoint(0) = endPointX;
+//    mainWayPoint(1) = endPointY;
+//    // TODO not great this is hard coded
+//    mainWayPoint(2) = 0.28f;
 
-    // TODO hard coded - get it programmatically?
-    double cylinder_radius = 0.01;
-    double x_cylinder0ffset = cylinder_radius * cos(angle_EE_push);
-    double y_cylinder0ffset = cylinder_radius * sin(angle_EE_push);
-
-    double desired_endPointX = desiredObjectEnd(0) - x_cylinder0ffset;
-    double desired_endPointY;
-
-    double endPointX;
-    double endPointY;
-    if(desiredObjectEnd(1) - goalobj_startPose.position(1) > 0){
-        desired_endPointY = desiredObjectEnd(1) + y_cylinder0ffset;
-    }
-    else{
-        desired_endPointY = desiredObjectEnd(1) - y_cylinder0ffset;
-    }
-
-    double intermediatePointY = goalobj_startPose.position(1);
-    double intermediatePointX = goalobj_startPose.position(0);
-//    double intermediatePointY = EE_startPose.position(1);
-//    double intermediatePointX = EE_startPose.position(0);
-
-    // Max speed could be a parameter
-    double maxDistTravelled = 0.1 * ((5.0f/6.0f) * horizon * MuJoCo_helper->ReturnModelTimeStep());
-    // float maxDistTravelled = 0.05 * ((5.0f/6.0f) * horizon * MUJOCO_DT);
-//    cout << "max EE travel dist: " << maxDistTravelled << endl;
-    double desiredDistTravelled = sqrt(pow((desired_endPointX - intermediatePointX),2) + pow((desired_endPointY - intermediatePointY),2));
-    double proportionOfDistTravelled = maxDistTravelled / desiredDistTravelled;
-//    cout << "proportion" << proportionOfDistTravelled << endl;
-    if(proportionOfDistTravelled > 1){
-        endPointX = desired_endPointX;
-        endPointY = desired_endPointY;
-    }
-    else{
-        endPointX = intermediatePointX + ((desired_endPointX - intermediatePointX) * proportionOfDistTravelled);
-        endPointY = intermediatePointY + ((desired_endPointY - intermediatePointY) * proportionOfDistTravelled);
-    }
-
-    mainWayPoint(0) = endPointX;
-    mainWayPoint(1) = endPointY;
-    // TODO not great this is hard coded
+    mainWayPoint(0) = object_end(0);
+    mainWayPoint(1) = object_end(1);
     mainWayPoint(2) = 0.28f;
 
     // Push the waypoint and when it should occur
     mainWayPoints.push_back(mainWayPoint);
     wayPointsTiming.push_back(horizon - 1);
 }
+
+//void PushBaseClass::EEWayPointsPush(m_point desiredObjectEnd,
+//                                    std::vector<m_point>& mainWayPoints, std::vector<int>& wayPointsTiming, int horizon){
+//
+//    pose_6 EE_startPose;
+//    pose_6 goalobj_startPose;
+//    MuJoCo_helper->GetBodyPoseAngleViaXpos(EE_name, EE_startPose, MuJoCo_helper->main_data);
+//    MuJoCo_helper->GetBodyPoseAngle(body_name, goalobj_startPose, MuJoCo_helper->main_data);
+//
+//    m_point mainWayPoint;
+//    // First waypoint - where the end-effector is currently
+//    mainWayPoint << EE_startPose.position(0), EE_startPose.position(1), EE_startPose.position(2);
+//    mainWayPoints.push_back(mainWayPoint);
+//    wayPointsTiming.push_back(0);
+//
+//    // Calculate the angle of approach - from goal position to object start position
+//    double angle_EE_push;
+//    double x_diff = desiredObjectEnd(0) - goalobj_startPose.position(0);
+//    double y_diff = desiredObjectEnd(1) - goalobj_startPose.position(1);
+////    double x_diff = desiredObjectEnd(0) - EE_startPose.position(0);
+////    double y_diff = desiredObjectEnd(1) - EE_startPose.position(1);
+//    angle_EE_push = atan2(y_diff, x_diff);
+//
+//    // TODO hard coded - get it programmatically?
+//    double cylinder_radius = 0.01;
+//    double x_cylinder0ffset = cylinder_radius * cos(angle_EE_push);
+//    double y_cylinder0ffset = cylinder_radius * sin(angle_EE_push);
+//
+//    double desired_endPointX = desiredObjectEnd(0) - x_cylinder0ffset;
+//    double desired_endPointY;
+//
+//    double endPointX;
+//    double endPointY;
+//    if(desiredObjectEnd(1) - goalobj_startPose.position(1) > 0){
+//        desired_endPointY = desiredObjectEnd(1) + y_cylinder0ffset;
+//    }
+//    else{
+//        desired_endPointY = desiredObjectEnd(1) - y_cylinder0ffset;
+//    }
+//
+//    double intermediatePointY = goalobj_startPose.position(1);
+//    double intermediatePointX = goalobj_startPose.position(0);
+////    double intermediatePointY = EE_startPose.position(1);
+////    double intermediatePointX = EE_startPose.position(0);
+//
+//    // Max speed could be a parameter
+//    double maxDistTravelled = 0.1 * ((5.0f/6.0f) * horizon * MuJoCo_helper->ReturnModelTimeStep());
+//    // float maxDistTravelled = 0.05 * ((5.0f/6.0f) * horizon * MUJOCO_DT);
+////    cout << "max EE travel dist: " << maxDistTravelled << endl;
+//    double desiredDistTravelled = sqrt(pow((desired_endPointX - intermediatePointX),2) + pow((desired_endPointY - intermediatePointY),2));
+//    double proportionOfDistTravelled = maxDistTravelled / desiredDistTravelled;
+////    cout << "proportion" << proportionOfDistTravelled << endl;
+//    if(proportionOfDistTravelled > 1){
+//        endPointX = desired_endPointX;
+//        endPointY = desired_endPointY;
+//    }
+//    else{
+//        endPointX = intermediatePointX + ((desired_endPointX - intermediatePointX) * proportionOfDistTravelled);
+//        endPointY = intermediatePointY + ((desired_endPointY - intermediatePointY) * proportionOfDistTravelled);
+//    }
+//
+//    mainWayPoint(0) = endPointX;
+//    mainWayPoint(1) = endPointY;
+//    // TODO not great this is hard coded
+//    mainWayPoint(2) = 0.28f;
+//
+//    // Push the waypoint and when it should occur
+//    mainWayPoints.push_back(mainWayPoint);
+//    wayPointsTiming.push_back(horizon - 1);
+//}
 
 std::vector<m_point> PushBaseClass::CreateAllEETransitPoints(const std::vector<m_point> &mainWayPoints, const std::vector<int> &wayPointsTiming){
     std::vector<m_point> EE_path;

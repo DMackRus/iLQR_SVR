@@ -423,6 +423,7 @@ void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
 //        std::cout << "A[horizonLength - 1]" << A[horizon_length - 1] << "\n";
 //        std::cout << "B[0] \n" << B[0] << "\n";
 //        std::cout << "l_x[0] \n" << l_x[0] << "\n";
+//        std::cout << "l_xx[0] \n" << l_xx[0] << "\n";
     }
     time_get_derivs_ms.push_back(duration_cast<microseconds>(high_resolution_clock::now() - timer_start).count() / 1000.0f);
 

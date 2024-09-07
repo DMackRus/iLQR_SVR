@@ -267,23 +267,24 @@ std::vector<MatrixXd> TwoDPushing::CreateInitOptimisationControls(int horizonLen
     // Pushing create init controls broken into three main steps
     // Step 1 - create main waypoints we want to end-effector to pass through
     m_point goal_pos;
+    pose_6 current_pose;
     std::vector<m_point> mainWayPoints;
     std::vector<int> mainWayPointsTimings;
     std::vector<m_point> allWayPoints;
     goal_pos(0) = residual_list[0].target[0];
     goal_pos(1) = residual_list[0].target[1];
-    EEWayPointsPush(goal_pos, mainWayPoints, mainWayPointsTimings, horizonLength);
-//    cout << mainWayPoints.size() << " waypoints created" << endl;
-//    cout << "mainwaypoint 0: " << mainWayPoints[1] << endl;
-//    cout << "mainWayPoint 1: " << mainWayPoints[2] << endl;
+    goal_pos(2) = 0.0;
+    MuJoCo_helper->GetBodyPoseAngle(body_name, current_pose, MuJoCo_helper->main_data);
+
+    EEWayPointsPush(goal_pos, current_pose.position, mainWayPoints, mainWayPointsTimings, horizonLength);
 
     // Step 2 - create all subwaypoints over the entire trajectory
     allWayPoints = CreateAllEETransitPoints(mainWayPoints, mainWayPointsTimings);
 
-    pose_7 goal_obj_start;
-    MuJoCo_helper->GetBodyPoseQuat(body_name, goal_obj_start, MuJoCo_helper->master_reset_data);
-    double diff_x = goal_pos(0) - goal_obj_start.position[0];
-    double diff_y =  goal_pos(1) - goal_obj_start.position[1];
+//    pose_7 goal_obj_start;
+//    MuJoCo_helper->GetBodyPoseQuat(body_name, goal_obj_start, MuJoCo_helper->master_reset_data);
+    double diff_x = goal_pos(0) - current_pose.position[0];
+    double diff_y =  goal_pos(1) - current_pose.position[1];
     double angle_EE_push = atan2(diff_y, diff_x);
 
     // Step 3 - follow the points via the jacobian

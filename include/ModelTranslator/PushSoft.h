@@ -14,12 +14,14 @@ public:
 
     void ReturnRandomStartState() override;
     void ReturnRandomGoalState() override;
-//    std::vector<MatrixXd> CreateInitOptimisationControls(int horizonLength) override;
+    std::vector<MatrixXd> CreateInitOptimisationControls(int horizonLength) override;
 //    std::vector<MatrixXd> CreateInitSetupControls(int horizonLength) override;
 
     bool TaskComplete(mjData *d, double &dist) override;
 
-    void Residuals(mjData *d, MatrixXd &residuals);
+    void Residuals(mjData *d, MatrixXd &residuals) override;
+
+    void SetGoalVisuals(mjData *d) override;
 
 private:
     int task_mode = PUSH_SOFT;

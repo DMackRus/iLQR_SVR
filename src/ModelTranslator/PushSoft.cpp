@@ -25,35 +25,72 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
 
     // Compute kinematics chain to compute site poses
     mj_kinematics(MuJoCo_helper->model, d);
-//    mj_forwardSkip(MuJoCo_helper->model, d, mjSTAGE_NONE, 1);
 
+    // If task = push soft
     if(task_mode == PUSH_SOFT){
-        // Compute the pose of the soft body
+        // --------------- Residual 0 - average position of soft body to goal -----------------
+        // Variable to count poses of all vertices to compute average position
         pose_6 soft_body_accumulator;
         soft_body_accumulator.position.setZero();
 
+        // Accumulate all vertices positions
         pose_6 body_pose;
-
         for(int i = 0; i < full_state_vector.soft_bodies[0].num_vertices; i++){
-
-            MuJoCo_helper->GetSoftBodyVertexPos(full_state_vector.soft_bodies[0].name, i, body_pose, d);
+            MuJoCo_helper->GetSoftBodyVertexPosGlobal(full_state_vector.soft_bodies[0].name, i, body_pose, d);
 
             soft_body_accumulator.position(0) += body_pose.position(0);
             soft_body_accumulator.position(1) += body_pose.position(1);
             soft_body_accumulator.position(2) += body_pose.position(2);
-
         }
 
+        // Compute average position
         soft_body_accumulator.position(0) /= full_state_vector.soft_bodies[0].num_vertices;
         soft_body_accumulator.position(1) /= full_state_vector.soft_bodies[0].num_vertices;
+        pose_6 soft_body_pose = soft_body_accumulator;
+        soft_body_pose.position(2) = 0.0;
 
         // 2D euclidean distance between the goal and the soft body
         double diff_x = soft_body_accumulator.position(0) - residual_list[0].target[0];
         double diff_y = soft_body_accumulator.position(1) - residual_list[0].target[1];
-        residuals(resid_index++, 0) = sqrt(pow(diff_x, 2)
-                                           + pow(diff_y, 2));
+        double dist = sqrt(pow(diff_x, 2)
+                           + pow(diff_y, 2));
 
-        // Compute average velocity of the soft body
+        // Residual 0 is euler distance of soft body to goal
+        residuals(resid_index++, 0) = dist;
+
+        // ---------------- Residual 1 - average velocity of soft body -----------------
+        soft_body_accumulator.position.setZero();
+        for(int i = 0; i < full_state_vector.soft_bodies[0].num_vertices; i++){
+            MuJoCo_helper->GetSoftBodyVertexVel(full_state_vector.soft_bodies[0].name, i, body_pose, d);
+
+            soft_body_accumulator.position(0) += body_pose.position(0);
+            soft_body_accumulator.position(1) += body_pose.position(1);
+            soft_body_accumulator.position(2) += body_pose.position(2);
+        }
+
+        // Compute average velocity
+        soft_body_accumulator.position(0) /= full_state_vector.soft_bodies[0].num_vertices;
+        soft_body_accumulator.position(1) /= full_state_vector.soft_bodies[0].num_vertices;
+
+        // Residual 1 is average velocity of the soft body
+        residuals(resid_index++, 0) = sqrt(pow(soft_body_accumulator.position(0), 2)
+                                           + pow(soft_body_accumulator.position(1), 2)
+                                           + pow(soft_body_accumulator.position(2), 2));
+
+        // ---------------- Residual 2 - distance between EE and soft body average position -----------------
+
+        pose_6 EE_pose;
+        MuJoCo_helper->GetBodyPoseAngleViaXpos("franka_gripper", EE_pose, d);
+
+        dist = sqrt(pow(EE_pose.position(0) - soft_body_pose.position(0), 2)
+                    + pow(EE_pose.position(1) - soft_body_pose.position(1), 2)
+                    + pow(EE_pose.position(2) - soft_body_pose.position(2), 2));
+
+        residuals(resid_index++, 0) = dist - residual_list[2].target[0];
+
+    }
+    // If task = push soft into rigid
+    else{
 
     }
 
@@ -244,51 +281,61 @@ void PushSoft::ReturnRandomGoalState(){
 ////    return initSetupControls;
 ////}
 //
-//std::vector<MatrixXd> PushSoft::CreateInitOptimisationControls(int horizonLength){
-//    std::vector<MatrixXd> initControls;
-//
-//    // Get EE current posi
-//
-//    // Pushing create init controls broken into three main steps
-//    // Step 1 - create main waypoints we want to end-effector to pass through
-//    m_point goal_pos;
-//    std::vector<m_point> mainWayPoints;
-//    std::vector<int> mainWayPointsTimings;
-//    std::vector<m_point> allWayPoints;
-//    double angle_EE_push = 0.0;
-//
-//    if(task_mode == PUSH_SOFT_RIGID){
+std::vector<MatrixXd> PushSoft::CreateInitOptimisationControls(int horizonLength){
+    std::vector<MatrixXd> initControls;
+
+    // Get EE current posi
+
+    // Pushing create init controls broken into three main steps
+    // Step 1 - create main waypoints we want to end-effector to pass through
+    m_point goal_pos;
+    std::vector<m_point> mainWayPoints;
+    std::vector<int> mainWayPointsTimings;
+    std::vector<m_point> allWayPoints;
+    double angle_EE_push = 0.0;
+
+    pose_6 current_pose;
+    MuJoCo_helper->GetSoftBodyVertexPos(full_state_vector.soft_bodies[0].name,
+                                        0, current_pose, MuJoCo_helper->main_data);
+
+    if(task_mode == PUSH_SOFT_RIGID){
 //        goal_pos(0) = current_state_vector.rigid_bodies[0].goal_linear_pos[0];
+        goal_pos(0) = residual_list[0].target[0];
 //        goal_pos(1) = current_state_vector.rigid_bodies[0].goal_linear_pos[1];
-//        goal_pos(2) = 0.3;
-//
-//        angle_EE_push = 0.0;
-//    }
-//    else{
+        goal_pos(1) = residual_list[0].target[1];
+        goal_pos(2) = 0.3;
+
+        angle_EE_push = 0.0;
+    }
+    else{
 //        goal_pos(0) = current_state_vector.soft_bodies[0].goal_linear_pos[0];
 //        goal_pos(1) = current_state_vector.soft_bodies[0].goal_linear_pos[1];
-//        goal_pos(2) = 0.3;
-//
-//        pose_6 goal_obj_start;
-//        MuJoCo_helper->GetSoftBodyVertexPos(current_state_vector.soft_bodies[0].name, 0, goal_obj_start, MuJoCo_helper->master_reset_data);
-//        double diff_x = goal_pos(0) - goal_obj_start.position[0];
-//        double diff_y =  goal_pos(1) - goal_obj_start.position[1];
-//
-//        angle_EE_push = atan2(diff_y, diff_x);
-//    }
-//    EEWayPointsPush(goal_pos, mainWayPoints, mainWayPointsTimings, horizonLength);
-//    cout << mainWayPoints.size() << " waypoints created" << endl;
-//    cout << "mainwaypoint 0: " << mainWayPoints[0] << endl;
-//    cout << "mainWayPoint 1: " << mainWayPoints[1] << endl;
-//
-//    // Step 2 - create all subwaypoints over the entire trajectory
-//    allWayPoints = CreateAllEETransitPoints(mainWayPoints, mainWayPointsTimings);
-//
-//    // Step 3 - follow the points via the jacobian
-//    initControls = JacobianEEControl(allWayPoints, angle_EE_push);
-//
-//    return initControls;
-//}
+
+        goal_pos(0) = residual_list[0].target[0];
+        goal_pos(1) = residual_list[0].target[1];
+        goal_pos(2) = 0.3;
+
+        pose_6 goal_obj_start;
+        MuJoCo_helper->GetSoftBodyVertexPos(current_state_vector.soft_bodies[0].name, 0, goal_obj_start, MuJoCo_helper->master_reset_data);
+        double diff_x = goal_pos(0) - goal_obj_start.position[0];
+        double diff_y =  goal_pos(1) - goal_obj_start.position[1];
+
+        angle_EE_push = atan2(diff_y, diff_x);
+    }
+
+    EEWayPointsPush(current_pose.position, goal_pos, mainWayPoints, mainWayPointsTimings, horizonLength);
+    cout << mainWayPoints.size() << " waypoints created" << endl;
+    cout << "mainwaypoint 0: " << mainWayPoints[0] << endl;
+    cout << "mainWayPoint 1: " << mainWayPoints[1] << endl;
+
+    // Step 2 - create all subwaypoints over the entire trajectory
+    allWayPoints = CreateAllEETransitPoints(mainWayPoints, mainWayPointsTimings);
+
+    // Step 3 - follow the points via the jacobian
+    initControls = JacobianEEControl(allWayPoints, angle_EE_push);
+
+    return initControls;
+}
 
 bool PushSoft::TaskComplete(mjData *d, double &dist){
     bool taskComplete = false;
@@ -334,4 +381,15 @@ bool PushSoft::TaskComplete(mjData *d, double &dist){
     }
 
     return taskComplete;
+}
+
+void PushSoft::SetGoalVisuals(mjData *d){
+    pose_6 goal_pose;
+    MuJoCo_helper->GetBodyPoseAngle("display_goal", goal_pose, d);
+
+    // Set the goal object position
+    goal_pose.position(0) = residual_list[0].target[0];
+    goal_pose.position(1) = residual_list[0].target[1];
+    goal_pose.position(2) = 0.032;
+    MuJoCo_helper->SetBodyPoseAngle("display_goal", goal_pose, d);
 }

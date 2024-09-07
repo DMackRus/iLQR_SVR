@@ -4,11 +4,11 @@ timeStep: 0.004
 openloop_horizon: 2000
 mpc_horizon: 100
 
-MPC_slowdown_factor: 1
+MPC_slowdown_factor: 5
 method: "iLQR_SVR_Set"      # Allowed methods are ["iLQR", "iLQR_SVR_Sum", "iLQR_SVR_SVD", "iLQR_SVR_Set"]
 K_matrix_threshold: 1
-theta: 1
-fixed_state_vector_size: 15
+theta: 5
+fixed_state_vector_size: 20
 
 robots:
   panda:
@@ -27,8 +27,13 @@ soft_bodies:
 residuals:
   goal_pos:
     target: [0.65, 0.1]
-    weight: 0.1
+    weight: 1
     weight_terminal: 10  # 1000 when long horizon
-#  vel:
-#    weight: 0.1
-#    weight_terminal: 0  # 1000 when long horizon
+  vel:
+    target: [0]
+    weight: 0.1
+    weight_terminal: 0
+  reach:
+    target: [0.5]
+    weight: 0
+    weight_terminal: 0

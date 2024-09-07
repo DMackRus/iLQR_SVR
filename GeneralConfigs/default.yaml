@@ -9,10 +9,9 @@ task: "push_soft"
 # "pushing_moderate_clutter" - Moderate clutter pushing task
 # "push_soft" - Soft object pushing task
 # "push_soft_into_rigid" - Soft object pushing into rigid object task
-#
 
 # Run mode for the program
-runMode: "Init_controls"
+runMode: "MPC_until_completion"
 # Valid runModes are:
 # "Init_controls"           - Displays the initial controls on repeat.
 # "Optimise_once"           - Optimise the trajectory open loop, display the optimised controls and initial controls repeatedly.

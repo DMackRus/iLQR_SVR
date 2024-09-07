@@ -493,7 +493,7 @@ void MuJoCoHelper::GetSoftBodyVertexPos(const string& flex_name, int vertex_id, 
     pose.position[1] = d->qpos[qpos_index + 1];
     pose.position[2] = d->qpos[qpos_index + 2];
 
-    // Jus to initialise values to something, not used
+    // Just to initialise values to something, not used
     pose.orientation[0] = 0.0;
     pose.orientation[1] = 0.0;
     pose.orientation[2] = 0.0;
@@ -514,7 +514,7 @@ void MuJoCoHelper::GetSoftBodyVertexPosGlobal(const string& flex_name, int verte
     const int joint_index = model->body_jntadr[body_id];
     const int qpos_index = model->jnt_qposadr[joint_index];
 
-    pose.position[0] = d->xpos[(3 *body_id) + 0];
+    pose.position[0] = d->xpos[(3 * body_id) + 0];
     pose.position[1] = d->xpos[(3 * body_id) + 1];
     pose.position[2] = d->xpos[(3 * body_id) + 2];
 
