@@ -25,6 +25,7 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
 
     // Compute kinematics chain to compute site poses
     mj_kinematics(MuJoCo_helper->model, d);
+//    mj_forward(MuJoCo_helper->model, d);
 
     // If task = push soft
     if(task_mode == PUSH_SOFT){
@@ -87,6 +88,7 @@ void PushSoft::Residuals(mjData *d, MatrixXd &residuals){
                     + pow(EE_pose.position(2) - soft_body_pose.position(2), 2));
 
         residuals(resid_index++, 0) = dist - residual_list[2].target[0];
+//        residuals(resid_index++, 0) = EE_pose.position(2) - residual_list[2].target[0];
 
     }
     // If task = push soft into rigid

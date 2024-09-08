@@ -31,6 +31,13 @@ iLQR_SVR::iLQR_SVR(std::shared_ptr<ModelTranslator> _modelTranslator, std::share
         }
     }
 
+    // Compute log scaling  for alphas, between 0 and 1
+    for(int i = 1; i < num_parallel_rollouts + 1; i++){
+        double linearValue = static_cast<double>(i) / (num_parallel_rollouts); // Evenly spaced values between 0 and 1
+        double compressed_vals = linearValue * linearValue;
+        alphas.push_back(compressed_vals);
+    }
+
     // Setup iLQR_SVR method from YAML file settings
     method = activeYamlReader->method;
     K_matrix_threshold = activeYamlReader->K_matrix_thresholds;
@@ -473,23 +480,24 @@ void iLQR_SVR::Iteration(int iteration_num, bool &converged, bool &lambda_exit){
     else{
         auto temp_timer = high_resolution_clock::now();
         std::vector<std::future<double>> futures;
-        std::vector<double> alphas;
-
-        for(int i = 0; i < num_parallel_rollouts; i++){
-            alphas.push_back(1.0 - (double)i/num_parallel_rollouts);
-        }
-//        std::cout << "setup threads: " << duration_cast<microseconds>(high_resolution_clock::now() - temp_timer).count() / 1000.0f << "ms \n";
 
         // Create tasks and push them into the vector
         for (int i = 0; i < num_parallel_rollouts; ++i) {
-            futures.push_back(std::async(std::launch::async, [this, i, &alphas]() {
-                return this->ForwardsPassParallel(i, alphas[i]);
+            futures.push_back(std::async(std::launch::async, [this, i]() {
+                return this->ForwardsPassParallel(i, this->alphas[i]);
             }));
         }
 
         std::vector<double> results;
         for (auto& future : futures) {
             results.push_back(future.get()); // get the result from future
+        }
+
+        // Print parallel rollout costs
+        if(verbose_output){
+            for(int i = 0; i < num_parallel_rollouts; i++){
+                std::cout << "cost from alpha: " << alphas[i] << " is " << results[i] << std::endl;
+            }
         }
 
         // Compute best alpha

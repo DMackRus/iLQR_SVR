@@ -5,9 +5,9 @@ openloop_horizon: 2000
 mpc_horizon: 50
 
 MPC_slowdown_factor: 1
-method: "iLQR"      # Allowed methods are ["iLQR", "iLQR_SVR_Sum", "iLQR_SVR_SVD", "iLQR_SVR_Set"]
+method: "iLQR_SVR_Set"      # Allowed methods are ["iLQR", "iLQR_SVR_Sum", "iLQR_SVR_SVD", "iLQR_SVR_Set"]
 K_matrix_threshold: 1
-theta: 1
+theta: 5
 fixed_state_vector_size: 15
 
 robots:

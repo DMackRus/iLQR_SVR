@@ -313,7 +313,8 @@ private:
 
     // State rollout data from parallel rollouts
     std::vector<std::vector<mujoco_data_min>> rollout_data;
-    int num_parallel_rollouts = 6;
+    int num_parallel_rollouts = 7;
+    std::vector<double> alphas;
 
     // Feedback gains matrices
     // open loop feedback gains
