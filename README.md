@@ -1,5 +1,5 @@
 # iLQR_SVR (iLQR with State Vector Reduction)
-Russell et al. ~WAFR 2024: Online state vector reduction during model predictive control with gradient-based trajectory optimisation.
+[Russell et al. ~WAFR 2024](http://www.algorithmic-robotics.org/papers/39_Online_state_vector_reducti.pdf): Online state vector reduction during model predictive control with gradient-based trajectory optimisation.
 
 Model predictive control using trajectory optimisation struggles to extend to high-dimensional systems, such as manipulation in clutter or manipulation of soft body objects. Dimensionality reduction is one method of speeding up trajectory optimisation to make closed-loop MPC feasible on these high-dimensional systems. This repository proposes a method of **dynamically** changing the size of the state vector **online** during MPC. The advantage of this is that optimisation is not considering the full system state at all times, which can considerably reduce the time taken for optimisation.
 
@@ -9,7 +9,7 @@ To determine when a Dof should be re-added to the set of states we optimise over
 
 
 ## Video
-TODO - Create a video summary and upload to youtube.
+[![Online State Vector Reduction](https://img.youtube.com/vi/8K_qfvb4lMI/0.jpg)](https://www.youtube.com/watch?v=8K_qfvb4lMI)
 
 ## Dependencies
 ### [MuJoCo 2.32](http://www.mujoco.org/) or newer
@@ -73,4 +73,12 @@ installation and setup.
 - Better residuals for push soft task
 
 ## Citing
-TODO - Add citation infomation.
+
+```
+@article{russell_2024_SVR,
+  title={Online state vector reduction during model predictive control with gradient-based trajectory optimisation},
+  author={Russell, David and Papallas, Rafael and Dogar, Mehmet},
+  journal={arXiv preprint arXiv:2408.11665},
+  year={2024}
+}
+```
